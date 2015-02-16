@@ -1,10 +1,7 @@
-var deckBuilder = require('../services/deck.service.js');
-var diffusion = require('../services/diffusion.service.js');
-var playerService = require('../services/player.service.js');
+var deckBuilder = require('./services/deck.service.js');
+var diffusion = require('./services/diffusion.service.js');
+var playerService = require('./services/player.service.js');
 
-/*
- * Create a room with just the basics. Once players are ready, we will generate the deck, etc.
- */
 exports.initRoom = function() {
     diffusion.init()
     .on('playerJoined', addPlayer)
@@ -12,15 +9,18 @@ exports.initRoom = function() {
     .on('playerCommand', playerCommand);
 };
 
-/*
- * Now finalise everything, generate the deck and such.
- */
 var finaliseRoom = function() {
     deckBuilder.generateDeck(10);
 };
 
 var addPlayer = function(playerID) {
-    playerService.createPlayer(playerID);
+    playerService.createPlayer(playerID)
+    .on('ready', playerReady);
+};
+
+var playerReady = function(playerID) {
+    // do something once each player is ready.
+    // when everyone is ready, we start the game.
 };
 
 var removePlayer = function(playerID) {
@@ -28,13 +28,12 @@ var removePlayer = function(playerID) {
 };
 
 var playerCommand = function(playerID, command, args) {
-    console.log(message);
     switch (message) {
     case 'PLAY':
-        playerService.playCard(playerID, args);
+        playerService.getPlayer(playerID).playCard(args);
         break;
     case 'READY':
-        playerService.ready(playerID);
+        playerService.getPlayer(playerID).ready();
         break;
     };
 };

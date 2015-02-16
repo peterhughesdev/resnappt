@@ -8,7 +8,7 @@ var bodyParser = require('body-parser');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
-var room = require('./controllers/room.controller.js');
+var room = require('./host/room.js');
 
 var app = express();
 

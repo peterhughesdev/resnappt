@@ -1,14 +1,14 @@
+var Player = require('../player/player');
+
 var players = {};
 
 exports.createPlayer = function(sessionID) {
-    var player = {
-        session : sessionID,
-        score : 0,
-        hand : {}
-    };
+    var player = new Player(sessionID);
+
     if (!players[sessionID]) {
         players[sessionID] = player;
     }
+    return player;
 };
 
 exports.getPlayer = function(sessionID) {
