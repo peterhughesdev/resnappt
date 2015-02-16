@@ -1,6 +1,11 @@
-var deckBuilder = require('./services/deck.service.js');
-var diffusion = require('./services/diffusion.service.js');
-var playerService = require('./services/player.service.js');
+var diffusion = require('./services/diffusion.service');
+var playerService = require('./services/player.service');
+var Deck = require('./deck/deck');
+var balance = require('./math/balance');
+
+// we may want to store the deck somewhere else? not sure yet.
+// alternatively, it might make sense to store the players here too.
+var deck = null;
 
 exports.initRoom = function() {
     diffusion.init()
@@ -10,7 +15,10 @@ exports.initRoom = function() {
 };
 
 var finaliseRoom = function() {
-    deckBuilder.generateDeck(10);
+    deck = new Deck();
+    deck.generateDeck(10, function(deck) {
+        console.log('deck ready');
+    });
 };
 
 var addPlayer = function(playerID) {
@@ -27,13 +35,16 @@ var removePlayer = function(playerID) {
     playerService.removePlayer(playerID);
 };
 
-var playerCommand = function(playerID, command, args) {
-    switch (message) {
+var playerCommand = function(playerID, data) {
+    switch (data.command) {
     case 'PLAY':
-        playerService.getPlayer(playerID).playCard(args);
+        playerService.getPlayer(playerID).playCard(data.args);
         break;
     case 'READY':
         playerService.getPlayer(playerID).ready();
+        break;
+    case 'SNAP':
+        playerService.getPlayer(playerID).snap();
         break;
     };
 };

@@ -54,7 +54,7 @@ var sessionsUnsubscribed = function(reason, topic) {
 
 var sessionCommand = function(message, topic) {
     var sessionID = topic.split('/')[1];
-    emitter.emit('playerCommand', sessionID, command);
+    emitter.emit('playerCommand', sessionID, message);
 };
 
 var createTopicTree = function() {
