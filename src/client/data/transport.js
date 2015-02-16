@@ -29,6 +29,14 @@ function Transport() {
     
     };
 
+    this.subscribe = function(topic) {
+        return session.subscribe(topic).on('error', log);
+    };
+
+    this.unsubscribe = function(topic) {
+        return session.unsubscribe(topic);
+    };
+
     this.init = function() {
         diffusion.connect(options).on('connect', function(sess) {
             session = sess;

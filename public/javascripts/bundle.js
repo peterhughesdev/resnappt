@@ -3,13 +3,6 @@ var Game = require('./game');
 
 diffusion.log('info');
 
-var app = new Vue({
-    el : '#app',
-    data : {
-    
-    }
-});
-
 
 var game = new Game();
 
@@ -45,6 +38,14 @@ function Transport() {
     
     };
 
+    this.subscribe = function(topic) {
+        return session.subscribe(topic).on('error', log);
+    };
+
+    this.unsubscribe = function(topic) {
+        return session.unsubscribe(topic);
+    };
+
     this.init = function() {
         diffusion.connect(options).on('connect', function(sess) {
             session = sess;
@@ -76,22 +77,145 @@ module.exports = Transport;
 
 },{"events":"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game.js":[function(require,module,exports){
 var Transport = require('./data/transport');
+var Renderer = require('./game/renderer');
 var Player = require('./game/player');
 
-function Game() {
+var Card = require('./game/card');
+
+var log = console.log.bind(console);
+
+function Game(app) {
+    var renderer = new Renderer(this, document.body.clientWidth, document.body.clientHeight);
     var transport = new Transport();
+    
     var player;
 
     transport.on('active', function() {
         player = new Player(transport);
+
+        var card = new Card(10, 10, log);
+        renderer.add(card);
+
     });
 
     transport.init();
+    renderer.init();
 }
 
 module.exports = Game;
 
-},{"./data/transport":"/Users/Peter/Dev/Projects/Resnappt/src/client/data/transport.js","./game/player":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js":[function(require,module,exports){
+},{"./data/transport":"/Users/Peter/Dev/Projects/Resnappt/src/client/data/transport.js","./game/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/card.js","./game/player":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js","./game/renderer":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/renderer.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/card.js":[function(require,module,exports){
+var Entity = require('./entity');
+
+function Card(x, y, onMove) {
+    var dragging = false;
+    var dragOffset = null;
+
+    return Entity.create({
+            x : x,
+            y : y,
+
+            width : 100,
+            height : 170,
+            
+            texture : '/images/card.jpg',
+
+            interactive : true,
+           
+            mousedown : function() {
+                dragging = true;
+            },
+
+            mouseup : function() {
+                dragging = false;
+            },
+
+            mousemove : function(data) {
+                if (dragging) {
+                    var pos = data.getLocalPosition(this.sprite.parent);
+
+                    this.sprite.position.x = pos.x
+                    this.sprite.position.y = pos.y
+
+                    onMove(this.sprite.position);
+                }
+            }
+    });
+}
+
+module.exports = Card;
+
+},{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entity.js":[function(require,module,exports){
+var EntityID = 0;
+
+var defaultEntity = {
+    x : 0,
+    y : 0,
+    
+    width : 100,
+    height : 100,
+    interactive : false,
+
+    tick : function() { },
+
+    mouseup : function() { },
+    mousedown : function() { },
+
+    mouseout : function() { },
+    mouseover : function() { },
+    mousemove : function() { }
+};
+
+function extend(base, target) {
+    for (var prop in base) {
+        if (target[prop] === undefined) {
+            target[prop] = base[prop];
+        }
+    }
+
+    return target;
+} 
+
+function Entity(id, opts, sprite) {
+    this.id = id;
+    this.opts = opts;
+    this.sprite = sprite;
+
+    this.tick = opts.tick.bind(this);
+
+    sprite.mouseup = opts.mouseup.bind(this); 
+    sprite.mouseout = opts.mouseout.bind(this);
+    sprite.mouseover = opts.mouseover.bind(this);
+    sprite.mousedown = opts.mousedown.bind(this);
+    sprite.mousemove = opts.mousemove.bind(this);
+    sprite.touchmove = opts.mousemove.bind(this);
+}
+
+Entity.create = function(opts, base) {
+    base = base || defaultEntity;
+    opts = extend(base, opts);
+
+    var s = new PIXI.Sprite(PIXI.Texture.fromImage(opts.texture, true));
+
+    s.width = opts.width;
+    s.height = opts.height;
+
+    s.position.x = opts.x;
+    s.position.y = opts.y;
+
+    s.interactive = opts.interactive;
+
+    s.anchor.x = 0.5;
+    s.anchor.y = 0.5;
+
+    //s.pivot.set(opts.width / 2, opts.height / 2);
+
+    return new Entity(EntityID++, opts, s);
+};
+
+module.exports = Entity;
+
+},{}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js":[function(require,module,exports){
 function Player(transport) {
     
     this.play = function(card, pile) {
@@ -99,10 +223,90 @@ function Player(transport) {
             card : card,
             pile : pile
         }); 
-    } 
+    };
+
+    this.ready = function() {
+        transport.dispatch('READY');
+    };
+
+    this.snap = function() {
+        transport.dispatch('SNAP');
+    };
 }
 
 module.exports = Player;
+
+},{}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/renderer.js":[function(require,module,exports){
+var Type = {
+    ADD : 0,
+    REMOVE : 1
+};
+
+
+function Renderer(game, width, height) {
+    var renderer = PIXI.autoDetectRenderer(width, height); 
+    var stage = new PIXI.Stage('#000000', true);
+
+    var running = false;
+
+    var entities = [];
+    var pending = [];
+    
+    function tick() {
+        pending.forEach(function(action) {
+            switch (action.type) {
+                case Type.ADD :
+                    stage.addChild(action.entity.sprite);
+                    entities.push(action.entity);
+                    break;
+                case Type.Remove :
+                    stage.removeChild(action.entity.sprite);
+
+                    var i = entities.indexOf(action.entity);
+                    if (i > -1) {
+                        entities.splice(i, 1);
+                    }
+                    
+                    break;
+            }
+        });   
+
+        pending = [];
+
+        entities.forEach(function(entity) {
+            entity.tick(game);
+        });
+
+        renderer.render(stage);
+
+        if (running) {
+            requestAnimationFrame(tick);
+        }
+    }
+
+    this.add = function(entity) {
+        pending.push({
+            type : Type.ADD,
+            entity : entity
+        });
+    };
+
+    this.remove = function(entity) {
+        pending.push({
+            type : Type.REMOVE,
+            entity : entity
+        });
+    };
+
+    this.init = function() {
+        document.body.appendChild(renderer.view);
+        
+        requestAnimationFrame(tick);
+        running = true;
+    };
+}
+
+module.exports = Renderer;
 
 },{}],"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.

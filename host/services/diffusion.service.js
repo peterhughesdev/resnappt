@@ -36,7 +36,7 @@ var connected = function() {
     .on('unsubscribed', sessionsUnsubscribed);
 
     session.subscribe('?sessions/.*/command')
-    .transform(String)
+    .transform(JSON.parse)
     .on('update', sessionCommand);
 };
 
