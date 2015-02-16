@@ -5,10 +5,10 @@ The new craze sweeping the nation; the classic fun of Snap, as delivered on an e
 
 ## Setup
 
-1 Deck
-Score Card Pile
-3 Effect Card slots 
-Player Hand - 3 cards (private)
+- 1 Deck
+- Score Card Pile
+- 3 Effect Card slots 
+- Player Hand - 3 cards (private)
 
 ## Rules
 ### Per turn
