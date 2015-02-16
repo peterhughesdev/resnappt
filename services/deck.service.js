@@ -1,3 +1,5 @@
+var deck = [];
+
 var effects = [{name:'a'},{name:'b'},{name:'c'}];
 var scores = [1,2,3,4];
 var runes = [1,2,3,4];
@@ -14,11 +16,12 @@ var generateCard = function() {
     return {effect : effect, score : score, rune : rune};
 };
 
-var generateDeck = function(deckSize) {
-    var deck = [];
-
+exports.generateDeck = function(deckSize) {
     for (var i=0; i<deckSize; i++) {
         deck[deck.length] = generateCard();
     }
 };
 
+exports.drawCard = function() {
+    return deck.pop();
+};
