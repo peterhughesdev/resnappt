@@ -1,0 +1,26 @@
+{
+  "name": "Resnappt",
+  "version": "0.0.1",
+
+  "description": "The winning demo week entry",
+
+  "homepage": "https://github.com/pushtechnology/saywhen",
+  
+  "author": "Peter Hughes",
+
+  "license": "Apache-2.0",
+  
+  "main": "server.js",
+  
+  "files": [
+    "README.md"
+  ],
+  "scripts": {
+      "test" : "jasmine"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "express" : "4.11.2", 
+    "jasmine" : "2.1.0"
+  }
+}
