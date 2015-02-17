@@ -8,6 +8,7 @@ var bodyParser = require('body-parser');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
+var diffusion = require('./host/services/mock.diffusion');//require('./host/services/diffusion.service');
 var room = require('./host/room.js');
 
 var app = express();
@@ -61,4 +62,6 @@ app.use(function(err, req, res, next) {
 
 module.exports = app;
 
-room.initRoom();
+room.initRoom(diffusion);
+
+diffusion.start();
