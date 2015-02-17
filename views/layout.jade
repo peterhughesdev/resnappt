@@ -3,7 +3,13 @@ html
   head
     title= title
     link(rel='stylesheet', href='/stylesheets/style.css')
-    script(src='/javascripts/lib/diffusion.js')
-    script(src='/javascripts/app.js')
+    script(src='/javascripts/diffusion.js')
+    script(src='/javascripts/pixi.js')
+
+    style(type='text/css')
+      | body { margin : 0; padding : 0; }
   body
     block content
+
+
+    script(src='/javascripts/bundle.js')
