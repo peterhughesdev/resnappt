@@ -1,11 +1,71 @@
 var types = [
-    {name : 'Guard', effect : 1},
-    {name : 'Double', effect : 2},
-    {name : 'Alchemy', effect : 3},
-    {name : 'Ward', effect : 4},
-    {name : 'Blockade', effect : 5},
-    {name : 'Riposte', effect : 6},
-    {name : 'Duplication', effect : 7}
+    {
+        name : 'Guard',
+        func : function(state) {
+            state.snap = false;
+            return state;
+        },
+        duration : 3
+    },
+    {
+        name : 'Double',
+        func : function(state) {
+            state.played.value = state.played.value * 2;
+            return state;
+        },
+        duration : 2
+    },
+    {
+        name : 'Alchemy',
+        func : function(state) {
+            if (state.top.rune === state.effectRune) {
+                state.top.rune = 'all';
+            }
+            if (state.played.rune === state.effectRune) {
+                state.played.rune = 'all';
+            }
+            return state;
+        },
+        duration : 3
+    },
+    {
+        name : 'Ward',
+        func : function(state) {
+            if (state.top.rune === state.effectRune) {
+                state.top.rune = 'none';
+            }
+            if (state.played.rune === state.effectRune) {
+                state.played.rune = 'none';
+            }
+            return state;
+            return state;
+        },
+        duration : 3
+    },
+    {
+        name : 'Blockade',
+        func : function(state) {
+            return state;
+        },
+        duration : 4
+    },
+    {
+        name : 'Riposte',
+        func : function(state) {
+            state.newCard = true;
+            return state;
+        },
+        duration : 4
+    },
+    {
+        name : 'Duplication',
+        duration : 1,
+        func : function(state) {
+            state.prevScore = true;
+            return state;
+        },
+        delay : true
+    }
 ];
 
 exports.random = function() {
