@@ -10,6 +10,8 @@ var highVal = 10;
 var cardsPerPlayer = 20;
 // add/subtract a number of cards based on number of players (this * nPlayers)
 var playerMultiplier = 0;
+// maximum hand size
+exports.MAX_HAND = 3;
 
 /*
  * Gaussian function

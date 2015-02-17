@@ -30,7 +30,7 @@ exports.init = function() {
 
 var connected = function() {
     console.log('diffusion connected');
-    session.subscribe('?sessions/.*')
+    var subscription = session.subscribe('?sessions/.*')
     .transform(String)
     .on('update', sessionsUpdate)
     .on('unsubscribed', sessionsUnsubscribed);
@@ -42,9 +42,7 @@ var connected = function() {
 
 var sessionsUpdate = function(message, topic) {
     var sessionID = topic.split('sessions/')[1];
-    if (message === sessionID) {
-        emitter.emit('playerJoined', sessionID);
-    }
+    emitter.emit('playerJoined', sessionID);
 };
 
 var sessionsUnsubscribed = function(reason, topic) {

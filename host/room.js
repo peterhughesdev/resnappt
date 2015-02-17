@@ -1,13 +1,9 @@
-var diffusion = require('./services/diffusion.service');
 var playerService = require('./services/player.service');
-var Deck = require('./deck/deck');
-var balance = require('./math/balance');
+var Game = require('./game/game');
 
-// we may want to store the deck somewhere else? not sure yet.
-// alternatively, it might make sense to store the players here too.
-var deck = null;
+var game = new Game();
 
-exports.initRoom = function() {
+exports.initRoom = function(diffusion) {
     diffusion.init()
     .on('playerJoined', addPlayer)
     .on('playerLeft', removePlayer)
@@ -15,20 +11,35 @@ exports.initRoom = function() {
 };
 
 var finaliseRoom = function() {
-    deck = new Deck();
-    deck.generateDeck(10, function(deck) {
-        console.log('deck ready');
-    });
+    game.start();
 };
 
 var addPlayer = function(playerID) {
-    playerService.createPlayer(playerID)
-    .on('ready', playerReady);
+    if (!game.isPlaying()) {
+        playerService.createPlayer(playerID)
+        .on('ready', playerReady);
+    }
+    else {
+        playerService.addSpectator(playerID);
+    }
 };
 
 var playerReady = function(playerID) {
-    // do something once each player is ready.
-    // when everyone is ready, we start the game.
+    console.log(playerID + ' ready!');
+
+    var players = playerService.getAllPlayers();
+
+    var allReady = true;
+    for (var p in players) {
+        if (!players[p].isReady()) {
+            allReady = false;
+        }
+    }
+
+    if (allReady) {
+        finaliseRoom();
+    }
+
 };
 
 var removePlayer = function(playerID) {
@@ -38,7 +49,7 @@ var removePlayer = function(playerID) {
 var playerCommand = function(playerID, data) {
     switch (data.command) {
     case 'PLAY':
-        playerService.getPlayer(playerID).playCard(data.args);
+        game.playCard(playerID, data.card, data.pile);
         break;
     case 'READY':
         playerService.getPlayer(playerID).ready();
