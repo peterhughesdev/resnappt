@@ -1,7 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"/Users/Peter/Dev/Projects/Resnappt/src/client/app.js":[function(require,module,exports){
 var Game = require('./game');
 
-diffusion.log('info');
+diffusion.log('silent');
 
 
 var game = new Game();
@@ -24,6 +24,9 @@ var log = console.log.bind(console);
 function Transport() {
     EventEmitter.call(this);
 
+    var sessionTopic = null;
+    var commandTopic = null;
+
     var session = null;
     var self = this;
 
@@ -39,11 +42,11 @@ function Transport() {
     };
 
     this.subscribe = function(topic) {
-        return session.subscribe(topic).on('error', log);
+        return session.subscribe(sessionTopic + '/' + topic).on('error', log);
     };
 
     this.unsubscribe = function(topic) {
-        return session.unsubscribe(topic);
+        return session.unsubscribe(sessionTopic + '/' + topic);
     };
 
     this.init = function() {
@@ -52,8 +55,8 @@ function Transport() {
 
             var sessionID = session.sessionID;
 
-            var sessionTopic = 'sessions/' + sessionID;
-            var commandTopic = sessionTopic + '/command';
+            sessionTopic = 'sessions/' + sessionID;
+            commandTopic = sessionTopic + '/command';
 
             var initialD = JSON.stringify({
                 command : 'READY',
@@ -76,94 +79,115 @@ Transport.prototype = new EventEmitter();
 module.exports = Transport;
 
 },{"events":"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game.js":[function(require,module,exports){
+var EventEmitter = require('events').EventEmitter;
 var Transport = require('./data/transport');
 var Renderer = require('./game/renderer');
 var Player = require('./game/player');
+var Board = require('./game/gui/board');
 
-var Card = require('./game/card');
+var coords = require('./util/coords');
 
 var log = console.log.bind(console);
 
 function Game(app) {
-    var renderer = new Renderer(this, document.body.clientWidth, document.body.clientHeight);
-    var transport = new Transport();
+    EventEmitter.call(this);
+
+    var services = [];
+
+    var renderer = new Renderer(this, coords.width, coords.height);
+    var board = new Board(this, renderer);
     
+    var transport = new Transport();
     var player;
 
+    var self = this;
+
     transport.on('active', function() {
-        player = new Player(transport);
-
-        var card = new Card(10, 10, log);
-        renderer.add(card);
-
+        player = new Player(self, transport);
     });
+
+    this.render = function(entity) {
+        renderer.add(entity);
+    };
+
+    this.tick = function(entity) {
+        services.forEach(function(service) {
+            if (service.handles(entity.type.id)) {
+                service.process(entity);
+            }
+        });
+    };
 
     transport.init();
     renderer.init();
 }
 
+Game.prototype = new EventEmitter();
+
 module.exports = Game;
 
-},{"./data/transport":"/Users/Peter/Dev/Projects/Resnappt/src/client/data/transport.js","./game/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/card.js","./game/player":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js","./game/renderer":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/renderer.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/card.js":[function(require,module,exports){
+},{"./data/transport":"/Users/Peter/Dev/Projects/Resnappt/src/client/data/transport.js","./game/gui/board":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/gui/board.js","./game/player":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js","./game/renderer":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/renderer.js","./util/coords":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/coords.js","events":"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js":[function(require,module,exports){
 var Entity = require('./entity');
 
-function Card(x, y, onMove) {
-    var dragging = false;
-    var dragOffset = null;
+function move(data) {
+    if (dragging) {
+        var pos = data.getLocalPosition(this.sprite.parent);
 
-    return Entity.create({
-            x : x,
-            y : y,
+        this.sprite.position.x = pos.x
+        this.sprite.position.y = pos.y
 
-            width : 100,
-            height : 170,
-            
-            texture : '/images/card.jpg',
+        onMove(this.sprite.position);
+    }
+}
 
-            interactive : true,
-           
-            mousedown : function() {
-                dragging = true;
-            },
+var Card = Entity.type('Card', {
+    width : 60,
+    height : 102,
+    texture : '/images/card.jpg'
+});
 
-            mouseup : function() {
-                dragging = false;
-            },
+function CardFactory(x, y, rune, score) {
+    return Entity.create(Card, {
+        x : x,
+        y : y,
 
-            mousemove : function(data) {
-                if (dragging) {
-                    var pos = data.getLocalPosition(this.sprite.parent);
+        data : {
+           rune : rune,
+           score : score
+        }
+    });
+};
 
-                    this.sprite.position.x = pos.x
-                    this.sprite.position.y = pos.y
+module.exports = CardFactory;
 
-                    onMove(this.sprite.position);
-                }
-            }
+},{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/effect-pile.js":[function(require,module,exports){
+var Entity = require('./entity');
+
+var EffectPile = Entity.type('EffectPile', {
+    width : 108,
+    height : 150,
+
+    texture : '/images/effect-placement.png'
+});
+
+function EffectPileFactory(x, y) {
+    return Entity.create(EffectPile, {
+        x : x,
+        y : y
     });
 }
 
-module.exports = Card;
+module.exports = EffectPileFactory;
 
-},{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entity.js":[function(require,module,exports){
+},{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js":[function(require,module,exports){
+var coords = require('../../util/coords');
+
 var EntityID = 0;
 
-var defaultEntity = {
-    x : 0,
-    y : 0,
-    
+var baseEntity = {
     width : 100,
     height : 100,
-    interactive : false,
-
-    tick : function() { },
-
-    mouseup : function() { },
-    mousedown : function() { },
-
-    mouseout : function() { },
-    mouseover : function() { },
-    mousemove : function() { }
+    interactive : true
 };
 
 function extend(base, target) {
@@ -176,48 +200,86 @@ function extend(base, target) {
     return target;
 } 
 
-function Entity(id, opts, sprite) {
-    this.id = id;
-    this.opts = opts;
+function Entity(type, props, sprite) {
+    this.type = type;
+    this.props = props;
     this.sprite = sprite;
-
-    this.tick = opts.tick.bind(this);
-
-    sprite.mouseup = opts.mouseup.bind(this); 
-    sprite.mouseout = opts.mouseout.bind(this);
-    sprite.mouseover = opts.mouseover.bind(this);
-    sprite.mousedown = opts.mousedown.bind(this);
-    sprite.mousemove = opts.mousemove.bind(this);
-    sprite.touchmove = opts.mousemove.bind(this);
 }
 
-Entity.create = function(opts, base) {
-    base = base || defaultEntity;
-    opts = extend(base, opts);
+// Expose known entity types
+Entity.Types = {};
 
-    var s = new PIXI.Sprite(PIXI.Texture.fromImage(opts.texture, true));
+// Create a new entity type with specified attributes
+Entity.type = function(name, base, attributes) {
+    if (attributes === undefined) {
+        attributes = base;
+        base = baseEntity;
+    }
 
-    s.width = opts.width;
-    s.height = opts.height;
+    attributes = extend(base, attributes);
+    attributes.id = EntityID++;
+    
+    Entity.Types[name] = attributes.id;
 
-    s.position.x = opts.x;
-    s.position.y = opts.y;
+    return attributes;
+};
 
-    s.interactive = opts.interactive;
+// Create a new entity from a specified type and map of properties
+Entity.create = function(type, properties) {
+    var s = new PIXI.Sprite(PIXI.Texture.fromImage(type.texture, true));
 
-    s.anchor.x = 0.5;
-    s.anchor.y = 0.5;
+    // Scale the width according to screen space
+    var scaled = coords.scaleSize(type.width, type.height);
+    s.width = scaled.width;
+    s.height = scaled.height;
+
+    // Normalise position according to screen space
+    var norm = coords.translateToScreen(properties.x, properties.y);
+    s.position.x = norm.x;
+    s.position.y = norm.y;
+   
+    s.interactive = type.interactive;
+
+    // Center anchor
+//    s.anchor.x = 0.5;
+//    s.anchor.y = 0.5;
 
     //s.pivot.set(opts.width / 2, opts.height / 2);
 
-    return new Entity(EntityID++, opts, s);
+    return new Entity(type, properties, s);
 };
 
 module.exports = Entity;
 
-},{}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js":[function(require,module,exports){
-function Player(transport) {
+},{"../../util/coords":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/coords.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/gui/board.js":[function(require,module,exports){
+var EffectPile = require('../entities/effect-pile');
+
+function Board(game, renderer) {
+    var effectPiles = [
+        EffectPile(100, 100),
+        EffectPile(100, 350),
+        EffectPile(100, 600)
+    ];
+
+    effectPiles.forEach(renderer.add);
+
+    var scorePile = EffectPile(320, 250);
+    renderer.add(scorePile);
+}
+
+module.exports = Board;
+
+},{"../entities/effect-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/effect-pile.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js":[function(require,module,exports){
+var Card = require('./entities/card');
+
+function Player(game, transport) {
     
+    var hand = [];
+
+    game.on('mouse:up', function(d) {
+        console.log(d);
+    });
+
     this.play = function(card, pile) {
         transport.dispatch('PLAY', {
             card : card,
@@ -232,30 +294,71 @@ function Player(transport) {
     this.snap = function() {
         transport.dispatch('SNAP');
     };
+
+    function handUpdate(newHand) {
+        for (var i = hand.length - 1; i < newHand.length; ++i) {
+            var card = Card(550 + (i * 65), 700);
+            game.render(card);
+
+            hand.push(card);
+        }
+    };
+
+    transport.subscribe('hand').transform(JSON.parse).on('update', handUpdate);
 }
 
 module.exports = Player;
 
-},{}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/renderer.js":[function(require,module,exports){
+},{"./entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/renderer.js":[function(require,module,exports){
 var Type = {
     ADD : 0,
     REMOVE : 1
 };
 
+var sl = Array.prototype.slice;
+
+function curry () {
+    var args = sl.call(arguments, 0);
+    var fn = args.shift();
+
+    return function() {
+        fn.apply(fn, args.concat(sl.call(arguments, 0)));
+    }
+};
 
 function Renderer(game, width, height) {
     var renderer = PIXI.autoDetectRenderer(width, height); 
-    var stage = new PIXI.Stage('#000000', true);
+    var stage = new PIXI.Stage('#000000', false);
 
     var running = false;
 
     var entities = [];
     var pending = [];
-    
+
+
+    var mouseEvents = ['up', 'out', 'over', 'down', 'move'];
+    var touchEvents = ['start', 'end'];
+    var clickEvents = ['click', 'tap'];
+
+    function attachListeners(entity) {
+        mouseEvents.forEach(function(e) {
+            entity.sprite['mouse' + e] = curry(game.emit.bind(game), 'mouse:' + e, entity);
+        });
+
+        touchEvents.forEach(function(e) {
+            entity.sprite['touch' + e] = curry(game.emit.bind(game), 'touch:' + e, entity);
+        });
+
+        clickEvents.forEach(function(e) {
+            entity.sprite[e] = curry(game.emit, e, entity);
+        });
+    }
+
     function tick() {
         pending.forEach(function(action) {
             switch (action.type) {
                 case Type.ADD :
+                    attachListeners(action.entity);
                     stage.addChild(action.entity.sprite);
                     entities.push(action.entity);
                     break;
@@ -274,7 +377,6 @@ function Renderer(game, width, height) {
         pending = [];
 
         entities.forEach(function(entity) {
-            entity.tick(game);
         });
 
         renderer.render(stage);
@@ -307,6 +409,57 @@ function Renderer(game, width, height) {
 }
 
 module.exports = Renderer;
+
+},{}],"/Users/Peter/Dev/Projects/Resnappt/src/client/util/coords.js":[function(require,module,exports){
+var width = Math.max(window.innerWidth, document.body.clientWidth);
+var height = Math.max(window.innerHeight, document.body.clientHeight);
+
+// Reference screen size
+var refW = 1100;
+var refH = 1100;
+
+// Midpoint from screen space
+var midW = width / 2;
+var midH = height / 2;
+
+function ratio(w, h) {
+    return h / w;
+}
+
+function scaleSize(w, h) {
+    var r = ratio(w, h);
+    var p = w * 100 / refW;
+    
+    var nw = p / 100 * width;
+    var nh = nw * r;
+
+    return {
+        width : nw,
+        height : nh
+    };
+}
+
+function translateToScreen(x, y) {
+    return {
+        x : (x/refW) * width,
+        y : (y/refH) * height
+    };
+}
+
+function translateToGame(x, y) {
+    return {
+        x : x - midW,
+        y : y - midH
+    };
+}
+
+module.exports = {
+    width : width,
+    height : height,
+    scaleSize : scaleSize,
+    translateToScreen : translateToScreen,
+    translateToGame : translateToGame
+};
 
 },{}],"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js":[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
