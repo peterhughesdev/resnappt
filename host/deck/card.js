@@ -4,18 +4,17 @@ function Card(rune, value, effect) {
     this.rune = rune;
     this.value = value;
 
-    var duration = effect.duration;
     var func = effect.func;
-    var delay = effect.delay;
     var name = effect.name;
+    var duration = effect.duration;
 
     this.name = function() {
         return name;
     };
 
     this.execute = function(state) {
-        if (delay) {
-            delay = false;
+        if (self.effect.delay) {
+            self.effect.delay = false;
             return state;
         }
 
@@ -26,6 +25,16 @@ function Card(rune, value, effect) {
 
     this.remaining = function() {
         return duration;
+    };
+
+    this.toData = function() {
+        var result = {};
+        result.effect = {};
+        result.effect.name = self.effect.name;
+        result.effect.duration = duration;
+        result.rune = self.rune;
+        result.value = self.value;
+        return result;
     };
 };
 

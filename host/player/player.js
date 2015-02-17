@@ -29,6 +29,7 @@ function Player(id) {
 
     this.score = function(value) {
         score += value;
+        emitter.emit('score', self);
     };
 
     this.getScore = function() {

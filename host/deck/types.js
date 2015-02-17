@@ -19,10 +19,10 @@ var types = [
         name : 'Alchemy',
         func : function(state) {
             if (state.top.rune === state.effectRune) {
-                state.top.rune = 'all';
+                state.top.modrune = 'all';
             }
             if (state.played.rune === state.effectRune) {
-                state.played.rune = 'all';
+                state.played.modrune = 'all';
             }
             return state;
         },
@@ -32,10 +32,10 @@ var types = [
         name : 'Ward',
         func : function(state) {
             if (state.top.rune === state.effectRune) {
-                state.top.rune = 'none';
+                state.top.modrune = 'none';
             }
             if (state.played.rune === state.effectRune) {
-                state.played.rune = 'none';
+                state.played.modrune = 'none';
             }
             return state;
             return state;
@@ -49,14 +49,14 @@ var types = [
         },
         duration : 4
     },
-    {
-        name : 'Riposte',
-        func : function(state) {
-            state.newCard = true;
-            return state;
-        },
-        duration : 4
-    },
+    // {
+    //     name : 'Riposte',
+    //     func : function(state) {
+    //         state.newCard = true;
+    //         return state;
+    //     },
+    //     duration : 4
+    // },
     {
         name : 'Duplication',
         duration : 1,

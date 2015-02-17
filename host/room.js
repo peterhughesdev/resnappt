@@ -3,7 +3,10 @@ var Game = require('./game/game');
 
 var game = new Game();
 
-exports.initRoom = function(diffusion) {
+var diffusion = null;
+
+exports.initRoom = function(df) {
+    diffusion = df;
     diffusion.init()
     .on('playerJoined', addPlayer)
     .on('playerLeft', removePlayer)
@@ -11,13 +14,43 @@ exports.initRoom = function(diffusion) {
 };
 
 var finaliseRoom = function() {
-    game.start();
+    game.on('updatePile', updatePile)
+    .on('updateTurn', updateTurn)
+    .on('updateHand', updateHand)
+    .on('updateEffects', updateEffect)
+    .on('updateDeck', updateDeck)
+    .start();
+};
+
+var updatePile = function(card) {
+    diffusion.topOfPile(card);
+};
+
+var updateTurn = function(playerID) {
+    diffusion.nextTurn(playerID);
+};
+
+var updateHand = function(player) {
+    diffusion.drawCard(player);
+};
+
+var updateEffect = function(effects) {
+    diffusion.updateEffectsPile(effects);
+};
+
+var updateDeck = function(remaining) {
+    diffusion.updateDeck(remaining);
+};
+
+var playerScore = function(player) {
+    diffusion.updateScore(player);
 };
 
 var addPlayer = function(playerID) {
     if (!game.isPlaying()) {
         playerService.createPlayer(playerID)
-        .on('ready', playerReady);
+        .on('ready', playerReady)
+        .on('score', playerScore);
     }
     else {
         playerService.addSpectator(playerID);
@@ -55,7 +88,7 @@ var playerCommand = function(playerID, data) {
         playerService.getPlayer(playerID).ready();
         break;
     case 'SNAP':
-        playerService.getPlayer(playerID).snap();
+        game.snap(playerID);
         break;
     };
 };

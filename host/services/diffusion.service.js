@@ -28,6 +28,10 @@ exports.init = function() {
     return self;
 };
 
+exports.start = function() {
+    createTopicTree();
+};
+
 var connected = function() {
     console.log('diffusion connected');
     var subscription = session.subscribe('?sessions/.*')
@@ -38,6 +42,8 @@ var connected = function() {
     session.subscribe('?sessions/.*/command')
     .transform(JSON.parse)
     .on('update', sessionCommand);
+
+    createTopicTree();
 };
 
 var sessionsUpdate = function(message, topic) {
@@ -62,7 +68,12 @@ var createTopicTree = function() {
 
         topics.add('turn').on('complete', function() {
             topics.removeWithSession('turn').on('complete', function() {
-                //turn topic ready
+                console.log('added turn topic');
+            });
+        });
+        topics.add('deck').on('complete', function() {
+            topics.removeWithSession('deck').on('complete', function() {
+                console.log('added deck topic');
             });
         });
     }
