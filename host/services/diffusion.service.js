@@ -76,5 +76,40 @@ var createTopicTree = function() {
                 console.log('added deck topic');
             });
         });
+        topics.add('pile/score');
+        topics.add('pile/effects');
     }
+};
+
+exports.drawCard = function(player) {
+    publish('sessions/'+player.playerID+'/hand', JSON.stringify(player.getHand()));
+};
+
+exports.updateDeck = function(remaining) {
+    publish('deck', remaining);
+};
+
+exports.nextTurn = function(playerID) {
+    publish('turn', playerID);
+};
+
+exports.topOfPile = function(card) {
+    publish('pile/score', JSON.stringify(card.toData()));
+};
+
+exports.updateEffectsPile = function(effects) {
+    var toPublish = [];
+    for (var i in effects) {
+        toPublish[toPublish.length] = effects[i].toData();
+    }
+    publish('pile/effects', JSON.stringify(toPublish));
+};
+
+exports.updateScore = function(player) {
+    publish('sessions/'+player.playerID+'/score', player.getScore());
+};
+
+var publish = function(topic, data) {
+    session.topics.update(topic, data);
+    console.log('publishing '+topic+' with '+data);
 };
