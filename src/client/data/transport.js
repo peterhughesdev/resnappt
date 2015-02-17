@@ -15,6 +15,9 @@ var log = console.log.bind(console);
 function Transport() {
     EventEmitter.call(this);
 
+    var sessionTopic = null;
+    var commandTopic = null;
+
     var session = null;
     var self = this;
 
@@ -30,11 +33,11 @@ function Transport() {
     };
 
     this.subscribe = function(topic) {
-        return session.subscribe(topic).on('error', log);
+        return session.subscribe(sessionTopic + '/' + topic).on('error', log);
     };
 
     this.unsubscribe = function(topic) {
-        return session.unsubscribe(topic);
+        return session.unsubscribe(sessionTopic + '/' + topic);
     };
 
     this.init = function() {
@@ -43,8 +46,8 @@ function Transport() {
 
             var sessionID = session.sessionID;
 
-            var sessionTopic = 'sessions/' + sessionID;
-            var commandTopic = sessionTopic + '/command';
+            sessionTopic = 'sessions/' + sessionID;
+            commandTopic = sessionTopic + '/command';
 
             var initialD = JSON.stringify({
                 command : 'READY',

@@ -1,6 +1,6 @@
 var Game = require('./game');
 
-diffusion.log('info');
+diffusion.log('silent');
 
 
 var game = new Game();
