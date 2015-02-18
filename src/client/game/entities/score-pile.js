@@ -1,16 +1,16 @@
 var Entity = require('./entity');
 
-var EffectPile = Entity.type('EffectPile', {
+var ScorePile = Entity.type('ScorePile', {
     width : 108,
     height : 150,
     texture : '/images/effect-placement.png'
 });
 
-function EffectPileFactory(x, y) {
-    return Entity.create(EffectPile, {
+function ScorePileFactory(x, y) {
+    return Entity.create(ScorePile, {
         x : x,
         y : y
     });
 }
 
-module.exports = EffectPileFactory;
+module.exports = ScorePileFactory;

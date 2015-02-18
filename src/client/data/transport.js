@@ -23,7 +23,7 @@ function Transport() {
 
     this.dispatch = function(command, message) {
         session.topics.update(commandTopic, JSON.stringify({ 
-            command : message, 
+            command : command, 
             message : message 
         }));
     };
@@ -32,12 +32,16 @@ function Transport() {
     
     };
 
-    this.subscribe = function(topic) {
-        return session.subscribe(sessionTopic + '/' + topic).on('error', log);
+    this.player = function(topic, type, cb) {
+        return this.subscribe(sessionTopic + '/' + topic, type, cb);
+    };
+
+    this.subscribe = function(topic, type, cb) {
+        return session.subscribe(topic).on('error', log).transform(type).on('update', cb);
     };
 
     this.unsubscribe = function(topic) {
-        return session.unsubscribe(sessionTopic + '/' + topic);
+        return session.unsubscribe(topic);
     };
 
     this.init = function() {
@@ -45,6 +49,7 @@ function Transport() {
             session = sess;
 
             var sessionID = session.sessionID;
+            self.sessionID = sessionID;
 
             sessionTopic = 'sessions/' + sessionID;
             commandTopic = sessionTopic + '/command';
@@ -57,8 +62,14 @@ function Transport() {
             });
 
             session.topics.removeWithSession(sessionTopic).on('complete', function() {
-                session.topics.add(commandTopic).on('complete', function() {
-                    self.emit('active');
+                session.topics.add(sessionTopic).on('complete', function() {
+                    session.topics.add(sessionTopic + '/command').on('complete', function() {
+                        session.topics.add(sessionTopic + '/hand').on('complete', function() {
+                            session.topics.add(sessionTopic + '/score', 0).on('complete', function() {
+                                self.emit('active');
+                            }).on('error', log);
+                        }).on('error', log);
+                    }).on('error', log);
                 }).on('error', log);
             }).on('error', log); 
         });

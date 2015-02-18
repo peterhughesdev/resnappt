@@ -31,10 +31,9 @@ exports.start = function() {
 };
 
 var connected = function() {
-    console.log('diffusion connected');
+    console.log('diffusion connected', session.isConnected());
     var subscription = session.subscribe('?sessions/.*')
-    .transform(String)
-    .on('update', sessionsUpdate)
+    .on('subscribed', sessionsAdded)
     .on('unsubscribed', sessionsUnsubscribed);
 
     session.subscribe('?sessions/.*/command')
@@ -44,7 +43,7 @@ var connected = function() {
     createTopicTree();
 };
 
-var sessionsUpdate = function(message, topic) {
+var sessionsAdded = function(message, topic) {
     var sessionID = topic.split('sessions/')[1];
     emitter.emit('playerJoined', sessionID);
 };

@@ -13,11 +13,15 @@ function Game(app) {
 
     var services = [];
 
+    var transport = new Transport();
+    this.transport = transport;
+
     var renderer = new Renderer(this, coords.width, coords.height);
     var board = new Board(this, renderer);
     
-    var transport = new Transport();
-    var player;
+    this.renderer = renderer;
+
+        var player;
 
     var self = this;
 

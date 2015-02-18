@@ -42,29 +42,41 @@ Entity.type = function(name, base, attributes) {
     return attributes;
 };
 
-// Create a new entity from a specified type and map of properties
-Entity.create = function(type, properties) {
-    var s = new PIXI.Sprite(PIXI.Texture.fromImage(type.texture, true));
-
-    // Scale the width according to screen space
-    var scaled = coords.scaleSize(type.width, type.height);
-    s.width = scaled.width;
-    s.height = scaled.height;
-
+function setSpriteProperties(type, properties, sprite) {
     // Normalise position according to screen space
     var norm = coords.translateToScreen(properties.x, properties.y);
-    s.position.x = norm.x;
-    s.position.y = norm.y;
+    
+    sprite.position.x = norm.x;
+    sprite.position.y = norm.y;
    
-    s.interactive = type.interactive;
+    sprite.interactive = type.interactive;
 
     // Center anchor
-//    s.anchor.x = 0.5;
-//    s.anchor.y = 0.5;
+    sprite.anchor.x = 0.5;
+    sprite.anchor.y = 0.5;
 
-    //s.pivot.set(opts.width / 2, opts.height / 2);
+    //sprite.pivot.set(type.width / 2, type.height / 2);
+}
 
-    return new Entity(type, properties, s);
+// Create a new entity from a specified type and map of properties
+Entity.create = function(type, properties) {
+    var sprite = new PIXI.Sprite(PIXI.Texture.fromImage(type.texture, true));
+    
+    sprite.width = type.width;
+    sprite.height = type.height;
+
+    setSpriteProperties(type, properties, sprite);
+
+    return new Entity(type, properties, sprite);
+};
+
+// Create a new Text Entity from a specified type and map of properties
+Entity.createText = function(type, properties) {
+    var sprite = new PIXI.Text(properties.text, type.style);
+    
+    setSpriteProperties(type, properties, sprite);
+
+    return new Entity(type, properties, sprite);
 };
 
 module.exports = Entity;

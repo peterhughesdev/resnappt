@@ -1,3 +1,5 @@
+var coords = require('../util/coords');
+
 var Type = {
     ADD : 0,
     REMOVE : 1
@@ -16,13 +18,14 @@ function curry () {
 
 function Renderer(game, width, height) {
     var renderer = PIXI.autoDetectRenderer(width, height); 
-    var stage = new PIXI.Stage('#000000', false);
+    var stage = new PIXI.Stage('#000000', true);
+
+    stage.scale = new PIXI.Point();
 
     var running = false;
 
     var entities = [];
     var pending = [];
-
 
     var mouseEvents = ['up', 'out', 'over', 'down', 'move'];
     var touchEvents = ['start', 'end'];
@@ -42,11 +45,15 @@ function Renderer(game, width, height) {
         });
     }
 
+    mouseEvents.forEach(function(e) {
+        stage['mouse' + e] = curry(game.emit.bind(game), 'mouse:' + e);
+    });
+
     function tick() {
         pending.forEach(function(action) {
             switch (action.type) {
                 case Type.ADD :
-                    attachListeners(action.entity);
+                    //attachListeners(action.entity);
                     stage.addChild(action.entity.sprite);
                     entities.push(action.entity);
                     break;
@@ -94,6 +101,33 @@ function Renderer(game, width, height) {
         requestAnimationFrame(tick);
         running = true;
     };
+
+    function intersects(sprite, x, y) {
+        var sw = sprite.width / 2;
+        var sh = sprite.height / 2;
+
+        var sx = sprite.x;
+        var sy = sprite.y;
+
+        return ((x >= x - sw || x <= x + sw) && (y >= y - sh || y <= y + sh));
+    }
+
+    this.getEntitiesForPos = function(x, y) {
+        var hit = [];
+
+        for (var i = 0; i < entities.length; ++i) {
+            if (intersects(entities[i].sprite, x, y)) {
+                hit.push(entities[i]);
+            }
+        }
+
+        return hit;
+    };
+
+    this.getEntityForPos = function(x, y) {
+        var entities = this.getEntitiesForPos(x, y);
+        return entities[0];
+    }
 }
 
 module.exports = Renderer;

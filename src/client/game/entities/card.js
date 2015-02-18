@@ -1,15 +1,11 @@
 var Entity = require('./entity');
 
-function move(data) {
-    if (dragging) {
-        var pos = data.getLocalPosition(this.sprite.parent);
-
-        this.sprite.position.x = pos.x
-        this.sprite.position.y = pos.y
-
-        onMove(this.sprite.position);
+var Rune = Entity.type('Rune', {
+    style : { 
+        font : "bold 55px Arial",
+        fill : "blue"
     }
-}
+});
 
 var Card = Entity.type('Card', {
     width : 60,
@@ -18,15 +14,24 @@ var Card = Entity.type('Card', {
 });
 
 function CardFactory(x, y, rune, score) {
-    return Entity.create(Card, {
+    var r = Entity.createText(Rune, {
+        x : -20,
+        y : -40,
+        text : rune
+    });
+
+    var card = Entity.create(Card, {
         x : x,
         y : y,
-
         data : {
            rune : rune,
            score : score
         }
     });
+
+    card.sprite.addChild(r.sprite);
+
+    return card;
 };
 
 module.exports = CardFactory;

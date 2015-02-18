@@ -1,13 +1,16 @@
-var width = Math.max(window.innerWidth, document.body.clientWidth);
-var height = Math.max(window.innerHeight, document.body.clientHeight);
-
 // Reference screen size
 var refW = 1100;
 var refH = 1100;
 
+// Viewport render dimensions (pixels)
+var width = Math.max(window.innerWidth, document.body.clientWidth, refW);
+var height = Math.max(window.innerHeight, document.body.clientHeight, refH);
+
 // Midpoint from screen space
 var midW = width / 2;
 var midH = height / 2;
+
+var ratio = Math.min(width / refW, height / refH);
 
 function ratio(w, h) {
     return h / w;
@@ -41,6 +44,7 @@ function translateToGame(x, y) {
 }
 
 module.exports = {
+    ratio : ratio,
     width : width,
     height : height,
     scaleSize : scaleSize,

@@ -1,4 +1,6 @@
 var EffectPile = require('../entities/effect-pile');
+var ScorePile = require('../entities/score-pile');
+var Score = require('../entities/score');
 
 function Board(game, renderer) {
     var effectPiles = [
@@ -9,8 +11,9 @@ function Board(game, renderer) {
 
     effectPiles.forEach(renderer.add);
 
-    var scorePile = EffectPile(320, 250);
+    var scorePile = ScorePile(320, 250);
     renderer.add(scorePile);
+
 }
 
 module.exports = Board;
