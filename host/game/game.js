@@ -99,10 +99,13 @@ function Game() {
                 endTurn(player, pile.play(card, true));
                 break;
             case 'EFFECT':
-                if (!pile.playEffect(card)) {
-                    player.addCard(card);
-                } else {
-                    emitter.emit('updateEffects', pile.getEffects());
+                // don't let a player play his last card as an effect.
+                if (player.getHand().length > 1) {
+                    if (!pile.playEffect(card)) {
+                        player.addCard(card);
+                    } else {
+                        emitter.emit('updateEffects', pile.getEffects());
+                    }
                 }
                 break;
         };

@@ -35,7 +35,7 @@ var addPlayer = function(playerID) {
     if (!game.isPlaying()) {
         playerService.createPlayer(playerID)
         .on('ready', checkReadiness)
-        .on('score', playerScore);
+        .on('score', diffusion.updateScore);
     }
     else {
         playerService.addSpectator(playerID);

@@ -8,7 +8,7 @@ var types = [
         duration : 3
     },
     {
-        name : 'Double',
+        name : 'Plunder',
         func : function(state) {
             state.played.value = state.played.value * 2;
             return state;
@@ -29,7 +29,7 @@ var types = [
         duration : 3
     },
     {
-        name : 'Ward',
+        name : 'Necromancy',
         func : function(state) {
             if (state.top.rune === state.effectRune) {
                 state.top.modrune = 'none';
