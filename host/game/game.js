@@ -73,8 +73,8 @@ function Game() {
     };
 
     this.end = function() {
+        scoreSummary();
         playerService.removeAllPlayers();
-        endGame();
     };
 
     this.finalRound = function() {
@@ -83,7 +83,6 @@ function Game() {
 
     this.playCard = function(playerID, c, p) {
         console.log(playerID + ' playing card ' + c + ' to ' + p);
-        console.log(turn);
         if (!playerService.getPlayerByIndex(turn) ||
             playerService.getPlayerByIndex(turn).playerID !== playerID ||
             !playerService.getPlayer(playerID).active ||
@@ -136,17 +135,17 @@ function Game() {
 
         emitter.emit('updateEffects', pile.getEffects());
 
-        self.drawHand(player);
 
         // start snap timer
         if (state.snap) {
             snapping = true;
             snappers = [];
             snapTimer = 5;
-            setTimeout(function() {
-                snapping = false;
+            var snapInterval = setInterval(function() {
                 emitter.emit('snapTimer', snapTimer);
                 if (snapTimer < 1) {
+                    snapping = false;
+                    clearInterval(snapInterval);
                     nextTurn(state);
                 }
                 snapTimer--;
@@ -187,6 +186,8 @@ function Game() {
         turn = (turn === playerService.getNPlayers() -1) ? turn = 0 : turn+1;
         emitter.emit('updateTurn', playerService.getPlayerByIndex(turn).playerID);
         nTurns++;
+
+        self.drawHand(playerService.getPlayerByIndex(turn));
     };
 
     this.drawHand = function(player) {
