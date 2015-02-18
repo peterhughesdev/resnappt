@@ -63,6 +63,7 @@ app.use(function(err, req, res, next) {
 
 module.exports = app;
 
-room.initRoom(diffusion);
-
-diffusion.start();
+if (process.env.RESNAPPT_ENV === 'host') {
+    room.initRoom(diffusion);
+    diffusion.start();
+}
