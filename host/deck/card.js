@@ -1,8 +1,12 @@
+var index = 0;
+
 function Card(rune, value, effect) {
     var self = this;
     this.effect = effect;
     this.rune = rune;
     this.value = value;
+
+    this.index = index++;
 
     var func = effect.func;
     var name = effect.name;
@@ -34,12 +38,17 @@ function Card(rune, value, effect) {
     this.toData = function() {
         var result = {};
         result.effect = {};
+        result.index = self.index;
         result.effect.name = self.effect.name;
         result.effect.duration = duration;
         result.rune = self.rune;
         result.value = self.value;
         return result;
     };
+};
+
+Card.reset = function() {
+    index = 0;
 };
 
 module.exports = Card;

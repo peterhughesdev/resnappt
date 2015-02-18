@@ -6,14 +6,19 @@ function Player(id) {
 
     var score = 0;
     var hand = [];
-    var emitter = new events.EventEmitter()
+    var emitter = new events.EventEmitter();
 
     var ready = false;
 
     this.playerID = id;
 
     this.playCard = function(c) {
-        var card = hand.splice(c,1);
+        var card = null;
+        for (var i in hand) {
+            if (hand[i].index === c) {
+                card = hand.splice(i,1);
+            }
+        }
         return card[0];
     };
 
@@ -40,6 +45,11 @@ function Player(id) {
         ready = true;
         self.active = true;
         emitter.emit('ready', self.playerID);
+    };
+
+    this.finished = function() {
+        self.active = false;
+        ready = false;
     };
 
     this.isReady = function() {

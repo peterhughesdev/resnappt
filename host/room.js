@@ -14,42 +14,27 @@ exports.initRoom = function(df) {
 };
 
 var finaliseRoom = function() {
-    game.on('updatePile', updatePile)
-    .on('updateTurn', updateTurn)
-    .on('updateHand', updateHand)
-    .on('updateEffects', updateEffect)
-    .on('updateDeck', updateDeck)
+    game.on('updatePile', diffusion.topOfPile)
+    .on('updateTurn', diffusion.nextTurn)
+    .on('updateHand', diffusion.drawCard)
+    .on('updateEffects', diffusion.updateEffectsPile)
+    .on('updateDeck', diffusion.updateDeck)
+    .on('endGame', diffusion.scoreSummary)
+    .on('snapTimer', diffusion.snapTimer)
     .start();
 };
 
-var updatePile = function(card) {
-    diffusion.topOfPile(card);
-};
-
-var updateTurn = function(playerID) {
-    diffusion.nextTurn(playerID);
-};
-
-var updateHand = function(player) {
-    diffusion.drawCard(player);
-};
-
-var updateEffect = function(effects) {
-    diffusion.updateEffectsPile(effects);
-};
-
-var updateDeck = function(remaining) {
-    diffusion.updateDeck(remaining);
-};
-
-var playerScore = function(player) {
-    diffusion.updateScore(player);
+var endGame = function() {
+    game.end();
+    diffusion.cleanup();
+    diffusion.start();
+    game = new Game();
 };
 
 var addPlayer = function(playerID) {
     if (!game.isPlaying()) {
         playerService.createPlayer(playerID)
-        .on('ready', playerReady)
+        .on('ready', checkReadiness)
         .on('score', playerScore);
     }
     else {
@@ -57,7 +42,7 @@ var addPlayer = function(playerID) {
     }
 };
 
-var playerReady = function(playerID) {
+var checkReadiness = function(playerID) {
     console.log(playerID + ' ready!');
 
     var players = playerService.getAllPlayers();
@@ -68,6 +53,9 @@ var playerReady = function(playerID) {
             allReady = false;
         }
     }
+    if (playerService.getNPlayers() < 2) {
+        allReady = false;
+    }
 
     if (allReady) {
         finaliseRoom();
@@ -77,15 +65,26 @@ var playerReady = function(playerID) {
 
 var removePlayer = function(playerID) {
     playerService.removePlayer(playerID);
+
+    if (playerService.getNPlayers() < 1) {
+        endGame();
+    } else {
+        checkReadiness();
+    }
 };
 
 var playerCommand = function(playerID, data) {
     switch (data.command) {
     case 'PLAY':
-        game.playCard(playerID, data.card, data.pile);
+        game.playCard(playerID, data.message.card, data.message.pile);
         break;
     case 'READY':
-        playerService.getPlayer(playerID).ready();
+        var player = playerService.getPlayer(playerID);
+        if (player) {
+            player.ready();
+        } else {
+            console.log('Unregistered player called ready');
+        }
         break;
     case 'SNAP':
         game.snap(playerID);
