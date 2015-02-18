@@ -5,35 +5,23 @@ var Score = require('./entities/score');
 
 var coords = require('../util/coords');
 
+var Hand = require('./hand');
+
 function Player(game, transport) {
+
+    var hand = new Hand(game, 700, 400);
+    this.hand = hand;
+
     var score = Score(700, 200, '0');
-    var hand = [];
+    var deck = Score(700, 240, 'Dealing');
+    var turn = Score(700, 300, 'Waiting to start');
+    var effectsPile = [];
+    var scoreCard;
+    
 
-    var canPlay = false;
-    var currentCard = null;
+    var self = this;
 
-    game.on('mouse:up', function(d) {
-        if (canPlay) {
-            var pos = d.getLocalPosition();
-            var entity = this.renderer.getEntityForPos(pos.x, pos.y);
-            
-            if (entity) {
-                if (entity.type.id === Entity.Types.Card) {
-                    currentCard = entity; 
-                }
-
-                if (entity.type.id === Entity.Types.EffectPile && currentCard) {
-                    
-                }
-
-                if (entity.type.id === Entity.Types.ScorePile && currentCard) {
-                    
-                }
-            }
-        }
-    });
-
-    this.play = function(card, pile) {
+   this.play = function(card, pile) {
         transport.dispatch('PLAY', {
             card : card,
             pile : pile
@@ -47,48 +35,60 @@ function Player(game, transport) {
     };
 
     this.snap = function() {
-        transport.dispatch('SNAP');
+        transport.dispatch('SNAP', {});
     };
 
-    function handUpdate(newHand) {
-        var i = Math.max(hand.length - 1, 0); 
-
-        for (; i < newHand.length; ++i) {
-            var card = Card(550 + (i * 65), 700, newHand[i].rune, newHand[i].score);
-            
-            hand.push(card);
-            game.render(card);
-        }
-    };
-
-    function scoreUpdate(newScore) {
-        score.sprite.setText(newScore);
-    };
-
-    transport.player('hand', JSON.parse, handUpdate);
-    transport.player('score', String, scoreUpdate);
-
-    game.render(score);
-
-
-    var deck = Score(700, 340, 'Dealing');
-
-    transport.subscribe('deck', String, function(size) {
-        deck.sprite.setText('Deck size: ' + size);
-    });
-
-    game.render(deck);
-
-    transport.subscribe('turn', String, function(session) {
-        console.log('Turn for', session);
-        canPlay = (session === transport.sessionID);
-    });
-
-    setTimeout(function() {
-        transport.dispatch('READY', {
-                sessionID : transport.sessionID
+    this.init = function() {
+        // Update cards in hand
+        transport.player('hand', JSON.parse, function(newHand) {
+            newHand.forEach(hand.add);
         });
-    }, 3000);
+
+        // Update score display
+        game.render(score);
+        transport.player('score', String, score.sprite.setText.bind(score.sprite));
+
+        // Update deck count
+        game.render(deck);
+        transport.subscribe('deck', String, function(size) {
+            deck.sprite.setText('Deck size: ' + size);
+        });
+
+        // Handle player turns
+        game.render(turn);
+        transport.subscribe('turn', String, function(session) {
+            self.canPlay = (session === transport.sessionID);
+
+            if (self.canPlay) {
+                turn.sprite.setText('Your turn'); 
+            } else {
+                turn.sprite.setText('Other player\'s turn');
+            }
+        });
+
+        // Update score pile
+        transport.subscribe('pile/score', JSON.parse, function(newScoreCard) {
+            if (scoreCard) {
+                game.remove(scoreCard);
+            }
+
+            scoreCard = Card(320, 250, 0, newScoreCard.rune, newScoreCard.value);
+            game.render(scoreCard);
+        });
+
+        // Update effects pile
+        transport.subscribe('pile.effects', JSON.parse, function(effects) {
+            effectsPile.forEach(game.remove); 
+
+            effects.forEach(function(data, i) {
+                var effectCard = Card(100, 100 + (250 * i), data.index, data.rune, data.value);
+                game.render(effectCard);
+
+                effectsPile.push(effectCard);
+            });
+        });
+
+    };
 }
 
 module.exports = Player;

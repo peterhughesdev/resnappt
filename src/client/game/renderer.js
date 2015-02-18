@@ -109,7 +109,7 @@ function Renderer(game, width, height) {
         var sx = sprite.x;
         var sy = sprite.y;
 
-        return ((x >= x - sw || x <= x + sw) && (y >= y - sh || y <= y + sh));
+        return ((x >= sx - sw && x <= sx + sw) && (y >= sy - sh && y <= sy + sh));
     }
 
     this.getEntitiesForPos = function(x, y) {

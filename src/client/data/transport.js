@@ -22,6 +22,8 @@ function Transport() {
     var self = this;
 
     this.dispatch = function(command, message) {
+        log(command, message);
+
         session.topics.update(commandTopic, JSON.stringify({ 
             command : command, 
             message : message 
@@ -48,18 +50,16 @@ function Transport() {
         diffusion.connect(options).on('connect', function(sess) {
             session = sess;
 
+            window.onclose = function() {
+                console.log("Calling session.close");
+                session.close();
+            };
+
             var sessionID = session.sessionID;
             self.sessionID = sessionID;
 
             sessionTopic = 'sessions/' + sessionID;
             commandTopic = sessionTopic + '/command';
-
-            var initialD = JSON.stringify({
-                command : 'READY',
-                message : {
-                    sessionID : sessionID
-                }
-            });
 
             session.topics.removeWithSession(sessionTopic).on('complete', function() {
                 session.topics.add(sessionTopic).on('complete', function() {

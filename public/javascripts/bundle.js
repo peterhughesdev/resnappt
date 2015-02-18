@@ -31,6 +31,8 @@ function Transport() {
     var self = this;
 
     this.dispatch = function(command, message) {
+        log(command, message);
+
         session.topics.update(commandTopic, JSON.stringify({ 
             command : command, 
             message : message 
@@ -57,18 +59,16 @@ function Transport() {
         diffusion.connect(options).on('connect', function(sess) {
             session = sess;
 
+            window.onclose = function() {
+                console.log("Calling session.close");
+                session.close();
+            };
+
             var sessionID = session.sessionID;
             self.sessionID = sessionID;
 
             sessionTopic = 'sessions/' + sessionID;
             commandTopic = sessionTopic + '/command';
-
-            var initialD = JSON.stringify({
-                command : 'READY',
-                message : {
-                    sessionID : sessionID
-                }
-            });
 
             session.topics.removeWithSession(sessionTopic).on('complete', function() {
                 session.topics.add(sessionTopic).on('complete', function() {
@@ -94,7 +94,10 @@ var EventEmitter = require('events').EventEmitter;
 var Transport = require('./data/transport');
 var Renderer = require('./game/renderer');
 var Player = require('./game/player');
-var Board = require('./game/gui/board');
+var Board = require('./game/gui/board'); 
+
+var Entity = require('./game/entities/entity');
+var Button = require('./game/entities/button');
 
 var coords = require('./util/coords');
 
@@ -109,20 +112,27 @@ function Game(app) {
     this.transport = transport;
 
     var renderer = new Renderer(this, coords.width, coords.height);
-    var board = new Board(this, renderer);
     
-    this.renderer = renderer;
-
-        var player;
-
     var self = this;
+    
+    var board;
+    var player;
+
+    var joinBtn = Button(coords.width / 2, coords.height / 2);
 
     transport.on('active', function() {
+        self.render(joinBtn);
+
+        board = new Board(self);
         player = new Player(self, transport);
     });
 
     this.render = function(entity) {
         renderer.add(entity);
+    };
+
+    this.remove = function(entity) {
+        renderer.remove(entity);
     };
 
     this.tick = function(entity) {
@@ -133,6 +143,68 @@ function Game(app) {
         });
     };
 
+    var currentCard = undefined;
+
+    this.on('mouse:up', function(d) {
+        var pos = d.global;
+        var entities = renderer.getEntitiesForPos(pos.x, pos.y);
+
+        if (entities.length) {
+            var entity = entities[entities.length - 1];
+            var bottom = entities[0];
+
+            if (player.canPlay) {
+                // Selecting a hand card
+                if (entity.type.id === Entity.Types.Card && player.hand.has(entity.props.id)) {
+                    if (currentCard) {
+                        currentCard.sprite.tint = 0xFFFFFF;
+                    }
+
+                    currentCard = player.hand.get(entity.props.id);
+                    currentCard.sprite.tint = 0xFFFF00;
+                }
+
+                // Adding a card to the score pile
+                if (bottom.type.id === Entity.Types.ScorePile && currentCard !== undefined) {
+                    player.play(currentCard.props.id, 'SCORE')
+
+                    currentCard.sprite.x = bottom.sprite.x;
+                    currentCard.sprite.y = bottom.sprite.y;
+                    currentCard.sprite.tint = 0xFFFFFF;
+
+                    player.hand.remove(currentCard.props.id);
+
+                    currentCard = undefined;   
+                }
+
+                // Adding a card to the effect pile
+                if (bottom.type.id === Entity.Types.EffectPile && currentCard !== undefined && player.hand.size() > 1) {
+                    player.play(currentCard.props.id, 'EFFECT');
+
+                    currentCard.sprite.x = bottom.sprite.x;
+                    currentCard.sprite.y = bottom.sprite.y;
+                    currentCard.sprite.tint = 0xFFFFFF;
+                    
+                    player.hand.remove(currentCard.props.id);
+                    
+                    currentCard = undefined;
+                }
+            } else {
+                // Join the game
+                if (bottom === joinBtn) {
+                    self.remove(joinBtn);
+                    player.init();
+                    player.ready();
+                }    
+
+                // Snap the score pile 
+                if (bottom.type.id === Entity.Types.ScorePile) {
+                    player.snap();
+                }
+            }
+        }
+    });
+
     transport.init();
     renderer.init();
 }
@@ -141,39 +213,63 @@ Game.prototype = new EventEmitter();
 
 module.exports = Game;
 
-},{"./data/transport":"/Users/Peter/Dev/Projects/Resnappt/src/client/data/transport.js","./game/gui/board":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/gui/board.js","./game/player":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js","./game/renderer":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/renderer.js","./util/coords":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/coords.js","events":"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js":[function(require,module,exports){
+},{"./data/transport":"/Users/Peter/Dev/Projects/Resnappt/src/client/data/transport.js","./game/entities/button":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/button.js","./game/entities/entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js","./game/gui/board":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/gui/board.js","./game/player":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js","./game/renderer":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/renderer.js","./util/coords":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/coords.js","events":"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/button.js":[function(require,module,exports){
+var Entity = require('./entity');
+
+var Button = Entity.type('Button', {
+    width : 240,
+    height : 120,
+    texture : '/images/join-btn.png'
+});
+
+function ButtonFactory(x, y) {
+    return Entity.create(Button, {
+        x : x,
+        y : y
+    });
+}
+
+module.exports = ButtonFactory;
+
+},{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js":[function(require,module,exports){
 var Entity = require('./entity');
 
 var Rune = Entity.type('Rune', {
     style : { 
-        font : "bold 55px Arial",
+        font : "bold 100px Arial",
         fill : "blue"
     }
 });
 
 var Card = Entity.type('Card', {
-    width : 60,
-    height : 102,
+    width : 100,
+    height : 160,
     texture : '/images/card.jpg'
 });
 
-function CardFactory(x, y, rune, score) {
+function CardFactory(x, y, id, rune, score) {
     var r = Entity.createText(Rune, {
-        x : -20,
-        y : -40,
+        x : -100,
+        y : -270,
         text : rune
+    });
+
+    var s = Entity.createText(Rune, {
+        x : 100,
+        y : 270,
+        text : score
     });
 
     var card = Entity.create(Card, {
         x : x,
         y : y,
-        data : {
-           rune : rune,
-           score : score
-        }
+        id : id,
+        rune : rune,
+        score : score
     });
 
     card.sprite.addChild(r.sprite);
+    card.sprite.addChild(s.sprite);
 
     return card;
 };
@@ -305,7 +401,7 @@ var Entity = require('./entity');
 
 var Score = Entity.type('Score', {
     style : {
-        font : "bold 50px Arial",
+        font : "bold 40px Arial",
         fill : "red"
     } 
 });
@@ -324,24 +420,84 @@ module.exports = ScoreFactory;
 var EffectPile = require('../entities/effect-pile');
 var ScorePile = require('../entities/score-pile');
 var Score = require('../entities/score');
+var Card = require('../entities/card');
 
-function Board(game, renderer) {
+function Board(game) {
     var effectPiles = [
         EffectPile(100, 100),
         EffectPile(100, 350),
         EffectPile(100, 600)
     ];
 
-    effectPiles.forEach(renderer.add);
+    effectPiles.forEach(game.render);
 
     var scorePile = ScorePile(320, 250);
-    renderer.add(scorePile);
-
+    game.render(scorePile);
 }
 
 module.exports = Board;
 
-},{"../entities/effect-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/effect-pile.js","../entities/score":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score.js","../entities/score-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score-pile.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js":[function(require,module,exports){
+},{"../entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js","../entities/effect-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/effect-pile.js","../entities/score":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score.js","../entities/score-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score-pile.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/hand.js":[function(require,module,exports){
+var Card = require('./entities/card');
+
+function Hand(game, x, y) {
+    var cards = [];
+    var cardByIndex = {};
+
+    function create(data, i) {
+        var card = Card(x, y, data.index, data.rune, data.value);
+        
+        game.render(card);
+        cards.push(card); 
+    }
+
+    function reposition(card, i) {
+        card.sprite.position.x = x + (i * 105);
+        card.sprite.position.y = y;
+    }
+
+    function reassign(card, i) {
+        cardByIndex[card.props.id] = i;
+    }
+
+    this.add = function(data) {
+        if (cardByIndex[data.index] === undefined) {
+            create(data, cards.length);
+            
+            cards.forEach(reposition);
+            cards.forEach(reassign);
+        }
+    };
+
+    this.remove = function(index) {
+        if (cardByIndex[index] !== undefined) {
+            delete cardByIndex[index];
+            
+            cards.forEach(reposition);
+            cards.forEach(reassign);
+        }
+    };
+
+    this.get = function(index) {
+        if (index) {
+            return cards[cardByIndex[index]];
+        } else {
+            return cards;
+        }
+    };
+
+    this.has = function(index) {
+        return cardByIndex[index] !== undefined;
+    };
+
+    this.size = function() {
+        return cards.length;
+    };
+}
+
+module.exports = Hand;
+
+},{"./entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js":[function(require,module,exports){
 var Entity = require('./entities/entity');
 
 var Card = require('./entities/card');
@@ -349,35 +505,23 @@ var Score = require('./entities/score');
 
 var coords = require('../util/coords');
 
+var Hand = require('./hand');
+
 function Player(game, transport) {
+
+    var hand = new Hand(game, 700, 400);
+    this.hand = hand;
+
     var score = Score(700, 200, '0');
-    var hand = [];
+    var deck = Score(700, 240, 'Dealing');
+    var turn = Score(700, 300, 'Waiting to start');
+    var effectsPile = [];
+    var scoreCard;
+    
 
-    var canPlay = false;
-    var currentCard = null;
+    var self = this;
 
-    game.on('mouse:up', function(d) {
-        if (canPlay) {
-            var pos = d.getLocalPosition();
-            var entity = this.renderer.getEntityForPos(pos.x, pos.y);
-            
-            if (entity) {
-                if (entity.type.id === Entity.Types.Card) {
-                    currentCard = entity; 
-                }
-
-                if (entity.type.id === Entity.Types.EffectPile && currentCard) {
-                    
-                }
-
-                if (entity.type.id === Entity.Types.ScorePile && currentCard) {
-                    
-                }
-            }
-        }
-    });
-
-    this.play = function(card, pile) {
+   this.play = function(card, pile) {
         transport.dispatch('PLAY', {
             card : card,
             pile : pile
@@ -391,53 +535,65 @@ function Player(game, transport) {
     };
 
     this.snap = function() {
-        transport.dispatch('SNAP');
+        transport.dispatch('SNAP', {});
     };
 
-    function handUpdate(newHand) {
-        var i = Math.max(hand.length - 1, 0); 
-
-        for (; i < newHand.length; ++i) {
-            var card = Card(550 + (i * 65), 700, newHand[i].rune, newHand[i].score);
-            
-            hand.push(card);
-            game.render(card);
-        }
-    };
-
-    function scoreUpdate(newScore) {
-        score.sprite.setText(newScore);
-    };
-
-    transport.player('hand', JSON.parse, handUpdate);
-    transport.player('score', String, scoreUpdate);
-
-    game.render(score);
-
-
-    var deck = Score(700, 340, 'Dealing');
-
-    transport.subscribe('deck', String, function(size) {
-        deck.sprite.setText('Deck size: ' + size);
-    });
-
-    game.render(deck);
-
-    transport.subscribe('turn', String, function(session) {
-        console.log('Turn for', session);
-        canPlay = (session === transport.sessionID);
-    });
-
-    setTimeout(function() {
-        transport.dispatch('READY', {
-                sessionID : transport.sessionID
+    this.init = function() {
+        // Update cards in hand
+        transport.player('hand', JSON.parse, function(newHand) {
+            newHand.forEach(hand.add);
         });
-    }, 3000);
+
+        // Update score display
+        game.render(score);
+        transport.player('score', String, score.sprite.setText.bind(score.sprite));
+
+        // Update deck count
+        game.render(deck);
+        transport.subscribe('deck', String, function(size) {
+            deck.sprite.setText('Deck size: ' + size);
+        });
+
+        // Handle player turns
+        game.render(turn);
+        transport.subscribe('turn', String, function(session) {
+            self.canPlay = (session === transport.sessionID);
+
+            if (self.canPlay) {
+                turn.sprite.setText('Your turn'); 
+            } else {
+                turn.sprite.setText('Other player\'s turn');
+            }
+        });
+
+        // Update score pile
+        transport.subscribe('pile/score', JSON.parse, function(newScoreCard) {
+            if (scoreCard) {
+                game.remove(scoreCard);
+            }
+
+            scoreCard = Card(320, 250, 0, newScoreCard.rune, newScoreCard.value);
+            game.render(scoreCard);
+        });
+
+        // Update effects pile
+        transport.subscribe('pile.effects', JSON.parse, function(effects) {
+            effectsPile.forEach(game.remove); 
+
+            effects.forEach(function(data, i) {
+                var effectCard = Card(100, 100 + (250 * i), data.index, data.rune, data.value);
+                game.render(effectCard);
+
+                effectsPile.push(effectCard);
+            });
+        });
+
+    };
 }
 
 module.exports = Player;
 
-},{"../util/coords":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/coords.js","./entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js","./entities/entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js","./entities/score":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/renderer.js":[function(require,module,exports){
+},{"../util/coords":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/coords.js","./entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js","./entities/entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js","./entities/score":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score.js","./hand":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/hand.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/renderer.js":[function(require,module,exports){
 var coords = require('../util/coords');
 
 var Type = {
@@ -549,7 +705,7 @@ function Renderer(game, width, height) {
         var sx = sprite.x;
         var sy = sprite.y;
 
-        return ((x >= x - sw || x <= x + sw) && (y >= y - sh || y <= y + sh));
+        return ((x >= sx - sw && x <= sx + sw) && (y >= sy - sh && y <= sy + sh));
     }
 
     this.getEntitiesForPos = function(x, y) {
