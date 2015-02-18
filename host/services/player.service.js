@@ -14,6 +14,7 @@ exports.createPlayer = function(sessionID) {
 
 exports.addSpectator = function(sessionID) {
     console.log('Adding spectator');
+    return {ready:function() { console.log('spectator called ready');}};
 };
 
 var getPlayer = function(sessionID) {
@@ -38,6 +39,13 @@ exports.removePlayer = function(sessionID) {
             players.splice(p,1);
         }
     }
+};
+
+exports.removeAllPlayers = function() {
+    for (var p in players) {
+        delete players[p];
+    }
+    players = [];
 };
 
 exports.getAllPlayers = function() {

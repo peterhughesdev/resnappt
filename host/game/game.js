@@ -32,6 +32,14 @@ function Game() {
     };
 
     this.start = function() {
+        turn = 0;
+        nTurns = 0;
+        deck = new Deck();
+        pile = new Pile();
+        finalRound = false;
+        snapping = false;
+        snappers = [];
+
         var players = playerService.getAllPlayers();
         var nPlayers = playerService.getNPlayers();
         deck.generateDeck(balance.numberOfCards(nPlayers), function(deck) {
@@ -48,7 +56,25 @@ function Game() {
 
             playing = true;
 
+            emitter.emit('updateTurn', playerService.getPlayerByIndex(turn).playerID);
+
         });
+    };
+
+    var scoreSummary = function() {
+        var finalScores = [];
+        var players = playerService.getAllPlayers();
+        for (var p in players) {
+            var playerID = players[p].playerID;
+            var score = players[p].getScore();
+            finalScores[finalScores.length] = { playerID : playerID, score : score };
+        }
+        emitter.emit('gameEnd', finalScores);
+    };
+
+    this.end = function() {
+        playerService.removeAllPlayers();
+        endGame();
     };
 
     this.finalRound = function() {
@@ -56,7 +82,12 @@ function Game() {
     };
 
     this.playCard = function(playerID, c, p) {
-        if (playerService.getPlayerByIndex(turn).playerID !== playerID || !playerService.getPlayer(playerID).active || snapping) {
+        console.log(playerID + ' playing card ' + c + ' to ' + p);
+        console.log(turn);
+        if (!playerService.getPlayerByIndex(turn) ||
+            playerService.getPlayerByIndex(turn).playerID !== playerID ||
+            !playerService.getPlayer(playerID).active ||
+            snapping) {
             return;
         }
         var player = playerService.getPlayer(playerID);
@@ -68,10 +99,13 @@ function Game() {
                 endTurn(player, pile.play(card, true));
                 break;
             case 'EFFECT':
-                if (!pile.playEffect(card)) {
-                    player.addCard(card);
-                } else {
-                    emitter.emit('updateEffects', pile.getEffects());
+                // don't let a player play his last card as an effect.
+                if (player.getHand().length > 1) {
+                    if (!pile.playEffect(card)) {
+                        player.addCard(card);
+                    } else {
+                        emitter.emit('updateEffects', pile.getEffects());
+                    }
                 }
                 break;
         };
@@ -95,6 +129,9 @@ function Game() {
         }
         if (finalRound) {
             player.active = false;
+            if(allPlayersFinished()){
+                scoreSummary();
+            }
         }
 
         emitter.emit('updateEffects', pile.getEffects());
@@ -105,10 +142,15 @@ function Game() {
         if (state.snap) {
             snapping = true;
             snappers = [];
+            snapTimer = 5;
             setTimeout(function() {
                 snapping = false;
-                nextTurn(state);
-            }, 5000);
+                emitter.emit('snapTimer', snapTimer);
+                if (snapTimer < 1) {
+                    nextTurn(state);
+                }
+                snapTimer--;
+            }, 1000);
         } else {
             nextTurn(state);
         }
@@ -123,7 +165,18 @@ function Game() {
 
     var nextTurn = function (state) {
         if (state.snap && snappers.length > 0) {
+
+            // if a player snaps on their turn, remove them from the list, unless riposte is in effect.
+            if (!state.newCard) {
+                var currentPlayer = playerService.getPlayerByIndex(turn);
+                var toRemove = snappers.indexOf(currentPlayer);
+                if (toRemove > -1) {
+                    snappers.splice(toRemove, 1);
+                }
+            }
+
             var winner = playerService.getPlayer(snappers[0]);
+
             if (state.top.modrune == state.played.modrune) {
                 winner.score(Math.ceil(state.score / 2.0));
             } else {
@@ -137,7 +190,8 @@ function Game() {
     };
 
     this.drawHand = function(player) {
-        var handSize = player.getHand().length;
+        var cards = Object.keys(player.getHand());
+        var handSize = cards.length;
 
         for (var i=handSize; i<balance.MAX_HAND; i++) {
             var card = deck.drawCard();

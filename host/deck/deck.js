@@ -5,6 +5,7 @@ var balance = require('../math/balance');
 var Card = require('./card');
 
 function Deck() {
+    Card.reset();
     var cards = [];
 
     var self = this;

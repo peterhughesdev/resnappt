@@ -30,6 +30,10 @@ exports.start = function() {
     session.on('connect', connected);
 };
 
+exports.cleanup = function() {
+    session.close();
+};
+
 var connected = function() {
     console.log('diffusion connected', session.isConnected());
     var subscription = session.subscribe('?sessions/.*')
@@ -75,7 +79,17 @@ var createTopicTree = function() {
         });
         topics.add('pile/score');
         topics.add('pile/effects');
+        topics.add('summary');
+        topics.add('snap');
     }
+};
+
+exports.snapTimer = function(snap) {
+    publish('snap', snap);
+};
+
+exports.scoreSummary = function(scores) {
+    publish('summary', JSON.stringify(scores));
 };
 
 exports.drawCard = function(player) {
@@ -91,6 +105,7 @@ exports.nextTurn = function(playerID) {
 };
 
 exports.topOfPile = function(card) {
+    console.log(card);
     publish('pile/score', JSON.stringify(card.toData()));
 };
 
