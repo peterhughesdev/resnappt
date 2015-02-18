@@ -49,14 +49,14 @@ var types = [
         },
         duration : 4
     },
-    // {
-    //     name : 'Riposte',
-    //     func : function(state) {
-    //         state.newCard = true;
-    //         return state;
-    //     },
-    //     duration : 4
-    // },
+    {
+        name : 'Riposte',
+        func : function(state) {
+            state.newCard = true;
+            return state;
+        },
+        duration : 4
+    },
     {
         name : 'Duplication',
         duration : 1,

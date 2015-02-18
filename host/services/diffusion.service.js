@@ -8,6 +8,14 @@ var session = null;
 exports.init = function() {
     var self = this;
 
+    this.on = function(evt, callback) {
+        emitter.on(evt, callback);
+        return self;
+    };
+    return self;
+};
+
+exports.start = function() {
     var options = {
         host : 'quickwittedAres.cloud.spudnub.com',
         ssl : false,
@@ -20,16 +28,6 @@ exports.init = function() {
     session = diffusion.connect(options);
 
     session.on('connect', connected);
-
-    this.on = function(evt, callback) {
-        emitter.on(evt, callback);
-        return self;
-    };
-    return self;
-};
-
-exports.start = function() {
-    createTopicTree();
 };
 
 var connected = function() {

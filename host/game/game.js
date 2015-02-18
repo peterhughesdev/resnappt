@@ -65,7 +65,7 @@ function Game() {
 
         switch (p) {
             case 'SCORE':
-                endTurn(player, pile.play(card));
+                endTurn(player, pile.play(card, true));
                 break;
             case 'EFFECT':
                 if (!pile.playEffect(card)) {
@@ -87,6 +87,11 @@ function Game() {
                 previousIndex += playerService.getNPlayers();
             }
             playerService.getPlayerByIndex(previousIndex).score(state.score);
+        }
+        if (state.newCard) {
+            // immediately draw a new card upon Riposte.
+            state = pile.play(deck.drawCard(), false);
+            emitter.emit('updatePile', pile.getTop());
         }
         if (finalRound) {
             player.active = false;

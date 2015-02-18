@@ -12,13 +12,17 @@ function Card(rune, value, effect) {
         return name;
     };
 
-    this.execute = function(state) {
+    this.execute = function(state, reduce) {
         if (self.effect.delay) {
             self.effect.delay = false;
             return state;
         }
 
-        duration = duration - 1;
+        // we want to calculate the modifications due to effects on riposte
+        // but not reduce the effect duration
+        if (reduce) {
+            duration = duration - 1;
+        }
         state.effectRune = self.rune;
         return func(state);
     };

@@ -36,7 +36,7 @@ function Pile() {
         }
     };
 
-    this.play = function(card) {
+    this.play = function(card, reduce) {
         var state = {top : top, played : card};
 
         state.top.modrune = state.top.rune;
@@ -44,7 +44,7 @@ function Pile() {
         state.snap = true;
 
         for (var e in effects) {
-            effects[e].execute(state);
+            effects[e].execute(state, reduce);
             if (effects[e].remaining() < 1) {
                 effects.splice(e,1);
             }
