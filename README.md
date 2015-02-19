@@ -105,9 +105,19 @@ Effect : If a player matches, the previous player receives the same score
     - Created by the client session
     - Client sends commands on this topic, as a JSON object
 
-            {command : 'READY'}
-            {command : 'SNAP'}
-            {command : 'PLAY', message : {card : 1, pile : pile}}
+            {
+                command : 'READY'
+            }
+            {
+                command : 'SNAP'
+            }
+            {
+                command : 'PLAY',
+                message : {
+                    card : 1,
+                    pile : pile
+                }
+            }
         where pile can be 'EFFECT' or 'SCORE'
 
 - sessions/[sessionID]/score
