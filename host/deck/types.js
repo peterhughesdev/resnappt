@@ -10,7 +10,7 @@ var types = [
     {
         name : 'Plunder',
         func : function(state) {
-            state.played.value = state.played.value * 2;
+            state.played.modvalue = state.played.value * 2;
             return state;
         },
         duration : 2

@@ -109,7 +109,7 @@ function Game() {
                 break;
             case 'EFFECT':
                 // don't let a player play his last card as an effect.
-                if (player.getHand().length > 1) {
+                if (player.getHand().length > 0) {
                     if (!pile.playEffect(card)) {
                         player.addCard(card);
                     } else {
@@ -157,6 +157,7 @@ function Game() {
                 state.endGame();
                 console.log('Game Finished');
                 self.end();
+                return;
             }
         }
 
@@ -200,7 +201,7 @@ function Game() {
             var winner = playerService.getPlayer(snapper);
             if (winner) {
                 var value = Math.ceil(pile.getState().played.value / 2.0);
-                if (pile.getState().top.modrune === pile.getState().played.modrune) {
+                if (pile.matchRunes()) {
                     winner.score(value);
                 } else {
                     winner.score(-1*value);
@@ -220,7 +221,9 @@ function Game() {
             self.drawHand(playerService.getPlayerByIndex(turn));
         }
         if (deck.remaining() === 0) {
+            playerService.getPlayerByIndex(turn).finished();
             self.finalRound();
+            console.log('final round');
         }
         state.nextTurn();
     };

@@ -12,7 +12,7 @@ function State() {
     var current = 'turn';
 
     var invalid = function(next) {
-        console.log('Invalid transition from '+current+' to '+next);
+        console.error('Invalid transition from '+current+' to '+next);
     };
 
     var transition = function(now) {

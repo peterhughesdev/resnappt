@@ -152,5 +152,4 @@ exports.updateScore = function(player) {
 
 var publish = function(topic, data) {
     session.topics.update(topic, data);
-    console.log('publishing '+topic+' with '+data);
 };

@@ -30,6 +30,10 @@ function Pile() {
         return false;
     };
 
+    this.matchRunes = function() {
+        return matchRunes(state.top.modrune, state.played.modrune);
+    };
+
     var matchRunes = function(runeA, runeB) {
         if (runeA === 'all' || runeB === 'all') {
             return true;
@@ -53,6 +57,7 @@ function Pile() {
 
         state.top.modrune = state.top.rune;
         state.played.modrune = state.played.rune;
+        state.played.modvalue = state.played.value;
         state.snap = true;
 
         for (var e in effects) {
@@ -67,7 +72,7 @@ function Pile() {
         var topRune = state.top.modrune;
         var playedRune = state.played.modrune;
         if (matchRunes(topRune, playedRune)) {
-            state.score = state.played.value;
+            state.score = state.played.modvalue;
         }
 
         top = card;
