@@ -21,6 +21,7 @@ var finaliseRoom = function() {
     .on('updateDeck', diffusion.updateDeck)
     .on('endGame', diffusion.scoreSummary)
     .on('snapTimer', diffusion.snapTimer)
+    .on('playerSnapped', diffusion.publishSnapper)
     .start();
 };
 

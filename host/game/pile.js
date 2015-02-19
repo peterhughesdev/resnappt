@@ -6,6 +6,7 @@ function Pile() {
 
     this.init = function(card) {
         top = card;
+        var state = {top : top};
     };
 
     this.getTop = function() {
@@ -37,7 +38,13 @@ function Pile() {
     };
 
     this.play = function(card, reduce) {
-        var state = {top : top, played : card};
+        var state = {
+            top : top,
+            played : card,
+            newCard : false,
+            prevScore : false,
+            snap : true
+        };
 
         state.top.modrune = state.top.rune;
         state.played.modrune = state.played.rune;
