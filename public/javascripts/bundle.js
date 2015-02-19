@@ -148,44 +148,44 @@ function Game(app) {
     this.on('mouse:up', function(d) {
         var pos = d.global;
         var entities = renderer.getEntitiesForPos(pos.x, pos.y);
-
+        console.log('click', pos, entities);
         if (entities.length) {
             var entity = entities[entities.length - 1];
             var bottom = entities[0];
 
             if (player.canPlay) {
                 // Selecting a hand card
-                if (entity.type.id === Entity.Types.Card && player.hand.has(entity.props.id)) {
+                if (entity.type.id === Entity.Types.Card && player.hand.has(entity.props.index)) {
                     if (currentCard) {
                         currentCard.sprite.tint = 0xFFFFFF;
                     }
 
-                    currentCard = player.hand.get(entity.props.id);
+                    currentCard = player.hand.get(entity.props.index);
                     currentCard.sprite.tint = 0xFFFF00;
                 }
 
                 // Adding a card to the score pile
                 if (bottom.type.id === Entity.Types.ScorePile && currentCard !== undefined) {
-                    player.play(currentCard.props.id, 'SCORE')
+                    player.play(currentCard.props.index, 'SCORE')
 
                     currentCard.sprite.x = bottom.sprite.x;
                     currentCard.sprite.y = bottom.sprite.y;
                     currentCard.sprite.tint = 0xFFFFFF;
 
-                    player.hand.remove(currentCard.props.id);
+                    player.hand.remove(currentCard.props.index);
 
                     currentCard = undefined;   
                 }
 
                 // Adding a card to the effect pile
                 if (bottom.type.id === Entity.Types.EffectPile && currentCard !== undefined && player.hand.size() > 1) {
-                    player.play(currentCard.props.id, 'EFFECT');
+                    player.play(currentCard.props.index, 'EFFECT');
 
                     currentCard.sprite.x = bottom.sprite.x;
                     currentCard.sprite.y = bottom.sprite.y;
                     currentCard.sprite.tint = 0xFFFFFF;
                     
-                    player.hand.remove(currentCard.props.id);
+                    player.hand.remove(currentCard.props.index);
                     
                     currentCard = undefined;
                 }
@@ -241,33 +241,72 @@ var Rune = Entity.type('Rune', {
     }
 });
 
+var Name = Entity.type('Name', {
+    style : {
+        font : "bold 50px Arial",
+        fill : "blue"
+    }
+});
+
+var Desc = Entity.type('Desc', {
+    width : 140,
+    style : {
+        font : "30px Arial",
+        fill : "black"
+    }
+});
+
 var Card = Entity.type('Card', {
     width : 100,
     height : 160,
     texture : '/images/card.jpg'
 });
 
-function CardFactory(x, y, id, rune, score) {
+
+function CardFactory(x, y, index, name, desc, rune, score, duration) {
     var r = Entity.createText(Rune, {
-        x : -100,
-        y : -270,
+        x : 80,
+        y : 90,
         text : rune
     });
 
+    var d = Entity.createText(Rune, {
+        x : 110,
+        y : 240,
+        text : duration
+    });
+
     var s = Entity.createText(Rune, {
-        x : 100,
-        y : 270,
+        x : 110,
+        y : -240,
         text : score
     });
+
+    var n = Entity.createText(Name, {
+        x : -40,
+        y : -240,
+        text : name 
+    });
+
+    var de = Entity.createText(Desc, {
+        x : -20,
+        y : 180,
+        text : desc
+    });
+
+    var texture = '/images/cards/' + name.toLowerCase() + '.png';
 
     var card = Entity.create(Card, {
         x : x,
         y : y,
-        id : id,
+        index : index,
         rune : rune,
-        score : score
+        score : score,
+        texture : texture
     });
 
+    card.sprite.addChild(d.sprite);
+    card.sprite.addChild(n.sprite);
     card.sprite.addChild(r.sprite);
     card.sprite.addChild(s.sprite);
 
@@ -357,6 +396,8 @@ function setSpriteProperties(type, properties, sprite) {
 
 // Create a new entity from a specified type and map of properties
 Entity.create = function(type, properties) {
+    type = extend(type, properties);
+
     var sprite = new PIXI.Sprite(PIXI.Texture.fromImage(type.texture, true));
     
     sprite.width = type.width;
@@ -445,7 +486,7 @@ function Hand(game, x, y) {
     var cardByIndex = {};
 
     function create(data, i) {
-        var card = Card(x, y, data.index, data.rune, data.value);
+        var card = Card(x, y, data.index, data.effect.name, "",  data.rune, data.value, data.effect.duration);
         
         game.render(card);
         cards.push(card); 
@@ -457,7 +498,7 @@ function Hand(game, x, y) {
     }
 
     function reassign(card, i) {
-        cardByIndex[card.props.id] = i;
+        cardByIndex[card.props.index] = i;
     }
 
     this.add = function(data) {
@@ -471,6 +512,7 @@ function Hand(game, x, y) {
 
     this.remove = function(index) {
         if (cardByIndex[index] !== undefined) {
+            cards.splice(cardByIndex[index], 1).forEach(game.remove);
             delete cardByIndex[index];
             
             cards.forEach(reposition);
@@ -539,7 +581,7 @@ function Player(game, transport) {
     };
 
     this.init = function() {
-        // Update cards in hand
+                // Update cards in hand
         transport.player('hand', JSON.parse, function(newHand) {
             newHand.forEach(hand.add);
         });
@@ -572,16 +614,16 @@ function Player(game, transport) {
                 game.remove(scoreCard);
             }
 
-            scoreCard = Card(320, 250, 0, newScoreCard.rune, newScoreCard.value);
+            scoreCard = createCard(320, 250, newScoreCard);
             game.render(scoreCard);
         });
 
         // Update effects pile
-        transport.subscribe('pile.effects', JSON.parse, function(effects) {
+        transport.subscribe('pile/effects', JSON.parse, function(effects) {
             effectsPile.forEach(game.remove); 
 
             effects.forEach(function(data, i) {
-                var effectCard = Card(100, 100 + (250 * i), data.index, data.rune, data.value);
+                var effectCard = createCard(100, 100 + (250 * i), data);
                 game.render(effectCard);
 
                 effectsPile.push(effectCard);
@@ -589,6 +631,10 @@ function Player(game, transport) {
         });
 
     };
+
+    function createCard(x, y, data) {
+        return Card(x, y, data.index, data.effect.name, "", data.rune, data.value, data.effect.duration);
+    }
 }
 
 module.exports = Player;
@@ -653,7 +699,7 @@ function Renderer(game, width, height) {
                     stage.addChild(action.entity.sprite);
                     entities.push(action.entity);
                     break;
-                case Type.Remove :
+                case Type.REMOVE :
                     stage.removeChild(action.entity.sprite);
 
                     var i = entities.indexOf(action.entity);

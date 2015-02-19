@@ -5,7 +5,7 @@ function Hand(game, x, y) {
     var cardByIndex = {};
 
     function create(data, i) {
-        var card = Card(x, y, data.index, data.rune, data.value);
+        var card = Card(x, y, data.index, data.effect.name, "",  data.rune, data.value, data.effect.duration);
         
         game.render(card);
         cards.push(card); 
@@ -17,7 +17,7 @@ function Hand(game, x, y) {
     }
 
     function reassign(card, i) {
-        cardByIndex[card.props.id] = i;
+        cardByIndex[card.props.index] = i;
     }
 
     this.add = function(data) {
@@ -31,6 +31,7 @@ function Hand(game, x, y) {
 
     this.remove = function(index) {
         if (cardByIndex[index] !== undefined) {
+            cards.splice(cardByIndex[index], 1).forEach(game.remove);
             delete cardByIndex[index];
             
             cards.forEach(reposition);

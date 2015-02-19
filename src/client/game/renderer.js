@@ -57,7 +57,7 @@ function Renderer(game, width, height) {
                     stage.addChild(action.entity.sprite);
                     entities.push(action.entity);
                     break;
-                case Type.Remove :
+                case Type.REMOVE :
                     stage.removeChild(action.entity.sprite);
 
                     var i = entities.indexOf(action.entity);
