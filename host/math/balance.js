@@ -7,7 +7,7 @@ var lowVal = 1;
 // highest score card value
 var highVal = 9;
 // cards per player
-var cardsPerPlayer = 5;
+var cardsPerPlayer = 10;
 // add/subtract a number of cards based on number of players (this * nPlayers)
 var playerMultiplier = 0;
 // maximum hand size
