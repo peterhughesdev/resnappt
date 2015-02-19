@@ -39,7 +39,7 @@ function Player(game, transport) {
     };
 
     this.init = function() {
-        // Update cards in hand
+                // Update cards in hand
         transport.player('hand', JSON.parse, function(newHand) {
             newHand.forEach(hand.add);
         });
@@ -72,16 +72,16 @@ function Player(game, transport) {
                 game.remove(scoreCard);
             }
 
-            scoreCard = Card(320, 250, 0, newScoreCard.rune, newScoreCard.value);
+            scoreCard = createCard(320, 250, newScoreCard);
             game.render(scoreCard);
         });
 
         // Update effects pile
-        transport.subscribe('pile.effects', JSON.parse, function(effects) {
+        transport.subscribe('pile/effects', JSON.parse, function(effects) {
             effectsPile.forEach(game.remove); 
 
             effects.forEach(function(data, i) {
-                var effectCard = Card(100, 100 + (250 * i), data.index, data.rune, data.value);
+                var effectCard = createCard(100, 100 + (250 * i), data);
                 game.render(effectCard);
 
                 effectsPile.push(effectCard);
@@ -89,6 +89,10 @@ function Player(game, transport) {
         });
 
     };
+
+    function createCard(x, y, data) {
+        return Card(x, y, data.index, data.effect.name, "", data.rune, data.value, data.effect.duration);
+    }
 }
 
 module.exports = Player;

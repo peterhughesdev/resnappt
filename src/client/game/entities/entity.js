@@ -60,6 +60,8 @@ function setSpriteProperties(type, properties, sprite) {
 
 // Create a new entity from a specified type and map of properties
 Entity.create = function(type, properties) {
+    type = extend(type, properties);
+
     var sprite = new PIXI.Sprite(PIXI.Texture.fromImage(type.texture, true));
     
     sprite.width = type.width;

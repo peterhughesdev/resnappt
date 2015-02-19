@@ -56,44 +56,44 @@ function Game(app) {
     this.on('mouse:up', function(d) {
         var pos = d.global;
         var entities = renderer.getEntitiesForPos(pos.x, pos.y);
-
+        console.log('click', pos, entities);
         if (entities.length) {
             var entity = entities[entities.length - 1];
             var bottom = entities[0];
 
             if (player.canPlay) {
                 // Selecting a hand card
-                if (entity.type.id === Entity.Types.Card && player.hand.has(entity.props.id)) {
+                if (entity.type.id === Entity.Types.Card && player.hand.has(entity.props.index)) {
                     if (currentCard) {
                         currentCard.sprite.tint = 0xFFFFFF;
                     }
 
-                    currentCard = player.hand.get(entity.props.id);
+                    currentCard = player.hand.get(entity.props.index);
                     currentCard.sprite.tint = 0xFFFF00;
                 }
 
                 // Adding a card to the score pile
                 if (bottom.type.id === Entity.Types.ScorePile && currentCard !== undefined) {
-                    player.play(currentCard.props.id, 'SCORE')
+                    player.play(currentCard.props.index, 'SCORE')
 
                     currentCard.sprite.x = bottom.sprite.x;
                     currentCard.sprite.y = bottom.sprite.y;
                     currentCard.sprite.tint = 0xFFFFFF;
 
-                    player.hand.remove(currentCard.props.id);
+                    player.hand.remove(currentCard.props.index);
 
                     currentCard = undefined;   
                 }
 
                 // Adding a card to the effect pile
                 if (bottom.type.id === Entity.Types.EffectPile && currentCard !== undefined && player.hand.size() > 1) {
-                    player.play(currentCard.props.id, 'EFFECT');
+                    player.play(currentCard.props.index, 'EFFECT');
 
                     currentCard.sprite.x = bottom.sprite.x;
                     currentCard.sprite.y = bottom.sprite.y;
                     currentCard.sprite.tint = 0xFFFFFF;
                     
-                    player.hand.remove(currentCard.props.id);
+                    player.hand.remove(currentCard.props.index);
                     
                     currentCard = undefined;
                 }
