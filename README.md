@@ -91,11 +91,13 @@ Effect : If a player matches, the previous player receives the same score
 - sessions/[sessionID]
     - Created by the client session
     - Server responds with a JSON object
+            
             {type : 'PLAYER' or 'SPECTATOR', [if 'PLAYER'] turn : turnIndex}
 
 - sessions/[sessionID]/command
     - Created by the client session
     - Client sends commands on this topic, as a JSON object
+
             {command : 'READY'}
             {command : 'SNAP'}
             {command : 'PLAY', message : {card : [cardIndex], pile : 'EFFECT' or 'SCORE'}}
@@ -107,6 +109,7 @@ Effect : If a player matches, the previous player receives the same score
 - sessions/[sessionID]/hand
     - An array of cards in the players hand
     - JSON
+
             [{
                 effect : {
                     name : 'effectName',
@@ -129,6 +132,7 @@ Effect : If a player matches, the previous player receives the same score
 - pile/score
     - Publishes the card currently on top of the score pile
     - JSON
+
             {
                 effect : {
                     name : 'effectName',
