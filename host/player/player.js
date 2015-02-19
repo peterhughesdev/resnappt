@@ -1,6 +1,6 @@
 var events = require('events');
 
-function Player(id) {
+function Player(id, turn) {
 
     var self = this;
 
@@ -11,6 +11,7 @@ function Player(id) {
     var ready = false;
 
     this.playerID = id;
+    this.turn = turn;
 
     this.playCard = function(c) {
         var card = null;
@@ -23,6 +24,7 @@ function Player(id) {
     };
 
     this.active = false;
+    this.finished = false;
 
     this.addCard = function(card) {
         hand[hand.length] = card;
@@ -44,6 +46,7 @@ function Player(id) {
     this.ready = function() {
         ready = true;
         self.active = true;
+        self.finished = true;
         emitter.emit('ready', self.playerID);
     };
 

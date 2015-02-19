@@ -2,11 +2,12 @@ function Pile() {
 
     var top = null;
 
+    var state = null;
     var effects = [];
 
     this.init = function(card) {
         top = card;
-        var state = {top : top};
+        state = {top : top};
     };
 
     this.getTop = function() {
@@ -15,6 +16,10 @@ function Pile() {
 
     this.getEffects = function() {
         return effects;
+    };
+
+    this.getState = function() {
+        return state;
     };
 
     this.playEffect = function(card) {
@@ -38,7 +43,7 @@ function Pile() {
     };
 
     this.play = function(card, reduce) {
-        var state = {
+        state = {
             top : top,
             played : card,
             newCard : false,
