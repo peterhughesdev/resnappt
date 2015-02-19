@@ -108,9 +108,11 @@ Effect : If a player matches, the previous player receives the same score
             {
                 command : 'READY'
             }
+
             {
                 command : 'SNAP'
             }
+
             {
                 command : 'PLAY',
                 message : {
