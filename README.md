@@ -146,6 +146,7 @@ Effect : If a player matches, the previous player receives the same score
 - pile/effect
     - An array of effect cards currently in play
     - JSON
+
             [{
                 effect : {
                     name : 'effectName',
@@ -167,6 +168,7 @@ Effect : If a player matches, the previous player receives the same score
 - summary
     - A summary of scores for all of the players, published at the end of the game
     - JSON
+
             [{
                 playerID : [player's sessionID],
                 score : 42
