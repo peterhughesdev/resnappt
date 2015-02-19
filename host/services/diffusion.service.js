@@ -80,12 +80,17 @@ var createTopicTree = function() {
         topics.add('pile/score');
         topics.add('pile/effects');
         topics.add('summary');
-        topics.add('snap');
+        topics.add('snap/winner');
+        topics.add('snap/timer');
     }
 };
 
+exports.publishSnapper = function(playerID) {
+    publish('snap/winner', playerID);
+};
+
 exports.snapTimer = function(snap) {
-    publish('snap', snap);
+    publish('snap/timer', snap);
 };
 
 exports.scoreSummary = function(scores) {

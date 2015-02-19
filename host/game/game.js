@@ -20,7 +20,11 @@ function Game() {
     var finalRound = false;
 
     var snapping = false;
-    var snappers = [];
+    var snapper = null;
+    var snapInterval = null;
+    var playerCanSnap = false;
+
+    var state = null;
 
     this.on = function(evt, callback) {
         emitter.on(evt, callback);
@@ -38,7 +42,8 @@ function Game() {
         pile = new Pile();
         finalRound = false;
         snapping = false;
-        snappers = [];
+        snapper = null;
+        snapTimer = null;
 
         var players = playerService.getAllPlayers();
         var nPlayers = playerService.getNPlayers();
@@ -51,7 +56,7 @@ function Game() {
                 self.drawHand(player);
             }
 
-            pile.init(deck.drawCard());
+            state = pile.init(deck.drawCard());
             emitter.emit('updatePile', pile.getTop());
 
             playing = true;
@@ -110,7 +115,8 @@ function Game() {
         };
     };
 
-    var endTurn = function (player, state) {
+    var endTurn = function (player, s) {
+        state = s;
         emitter.emit('updatePile', pile.getTop());
 
         player.score(state.score);
@@ -135,46 +141,40 @@ function Game() {
 
         emitter.emit('updateEffects', pile.getEffects());
 
-
         // start snap timer
         if (state.snap) {
             snapping = true;
-            snappers = [];
+            snapper = null;
             snapTimer = 5;
-            var snapInterval = setInterval(function() {
+            snapInterval = setInterval(function() {
                 emitter.emit('snapTimer', snapTimer);
                 if (snapTimer < 1) {
                     snapping = false;
                     clearInterval(snapInterval);
-                    nextTurn(state);
+                    nextTurn();
                 }
                 snapTimer--;
             }, 1000);
         } else {
-            nextTurn(state);
+            nextTurn();
         }
     };
 
     this.snap = function(playerID) {
-        if (!snapping) {
+        if (!snapping ||
+            (!state.newCard && playerService.getPlayerByIndex(turn).playerID === playerID)) {
             return;
         }
-        snappers[snappers.length] = playerID;
+        snapping = false;
+        snapper = playerID;
+        clearInterval(snapInterval);
+        emitter.emit('playerSnapped', playerID);
+        nextTurn();
     };
 
-    var nextTurn = function (state) {
-        if (state.snap && snappers.length > 0) {
-
-            // if a player snaps on their turn, remove them from the list, unless riposte is in effect.
-            if (!state.newCard) {
-                var currentPlayer = playerService.getPlayerByIndex(turn);
-                var toRemove = snappers.indexOf(currentPlayer);
-                if (toRemove > -1) {
-                    snappers.splice(toRemove, 1);
-                }
-            }
-
-            var winner = playerService.getPlayer(snappers[0]);
+    var nextTurn = function () {
+        if (state.snap && snapper) {
+            var winner = playerService.getPlayer(snapper);
 
             if (state.top.modrune == state.played.modrune) {
                 winner.score(Math.ceil(state.score / 2.0));
