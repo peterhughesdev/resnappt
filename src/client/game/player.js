@@ -15,7 +15,7 @@ function Player(app, session, turn) {
     var pos = playerPosition[turn];
 
     var score = Score(0, 80, '0');
-    var name = Score(0, 80, session);
+    var name = Score(0, 80, 'Player ' + turn);
     var icon = Score(200, 0, 'Playing');
 
     var gui = PlayerGUI(pos.x, pos.y, name, score, icon);
