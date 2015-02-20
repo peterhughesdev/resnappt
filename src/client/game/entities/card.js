@@ -2,7 +2,7 @@ var Entity = require('./entity');
 
 var Rune = Entity.type('Rune', {
     style : { 
-        font : "bold 100px Arial",
+        font : "bold 100px LibianRunic",
         fill : "blue"
     }
 });
@@ -23,13 +23,29 @@ var Desc = Entity.type('Desc', {
 });
 
 var Card = Entity.type('Card', {
-    width : 100,
-    height : 160,
+    width : 133,
+    height : 200,
     texture : '/images/card.jpg'
 });
 
 
 function CardFactory(x, y, data) {
+    var rune = "";
+    switch (data.rune) {
+    case 'a':
+        rune = "\u0080";
+        break;
+    case 'b':
+        rune = "\u0081";
+        break;
+    case 'c':
+        rune = "\u0082";
+        break;
+    case 'd':
+        rune = "\u0083";
+        break;
+    };
+
     var rune = Entity.createText(Rune, {
         x : 80,
         y : 90,

@@ -445,8 +445,8 @@ module.exports = BoardFactory;
 var Entity = require('./entity');
 
 var Button = Entity.type('Button', {
-    width : 145,
-    height : 149,
+    width : 150,
+    height : 150,
     texture : '/images/join-btn.png'
 });
 
@@ -464,7 +464,7 @@ var Entity = require('./entity');
 
 var Rune = Entity.type('Rune', {
     style : { 
-        font : "bold 100px Arial",
+        font : "bold 100px LibianRunic",
         fill : "blue"
     }
 });
@@ -485,13 +485,29 @@ var Desc = Entity.type('Desc', {
 });
 
 var Card = Entity.type('Card', {
-    width : 100,
-    height : 160,
+    width : 133,
+    height : 200,
     texture : '/images/card.jpg'
 });
 
 
 function CardFactory(x, y, data) {
+    var rune = "";
+    switch (data.rune) {
+    case 'a':
+        rune = "\u0080";
+        break;
+    case 'b':
+        rune = "\u0081";
+        break;
+    case 'c':
+        rune = "\u0082";
+        break;
+    case 'd':
+        rune = "\u0083";
+        break;
+    };
+
     var rune = Entity.createText(Rune, {
         x : 80,
         y : 90,
@@ -547,8 +563,8 @@ module.exports = CardFactory;
 var Entity = require('./entity');
 
 var EffectPile = Entity.type('EffectPile', {
-    width : 108,
-    height : 150,
+    width : 133,
+    height : 200,
     texture : '/images/effect-placement.png'
 });
 
@@ -651,8 +667,8 @@ module.exports = Entity;
 var Entity = require('./entity');
 
 var ScorePile = Entity.type('ScorePile', {
-    width : 108,
-    height : 150,
+    width : 133,
+    height : 200,
     texture : '/images/effect-placement.png'
 });
 
@@ -665,25 +681,25 @@ function ScorePileFactory(x, y) {
 
 module.exports = ScorePileFactory;
 
-},{"./entity":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/entity.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/score.js":[function(require,module,exports){
+},{"./entity":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/entity.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/text.js":[function(require,module,exports){
 var Entity = require('./entity');
 
-var Score = Entity.type('Score', {
+var Text = Entity.type('Text', {
     style : {
         font : "bold 64px LibianRunic",
         fill : "white"
     } 
 });
 
-function ScoreFactory(x, y, text) {
-    return Entity.createText(Score, {
+function TextFactory(x, y, text) {
+    return Entity.createText(Text, {
         x : x,
         y : y,
         text : text
     });
 };
 
-module.exports = ScoreFactory;
+module.exports = TextFactory;
 
 },{"./entity":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/entity.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/title.js":[function(require,module,exports){
 var Entity = require('./entity');
@@ -1121,10 +1137,10 @@ SceneManager.create = function(app, scenes) {
 module.exports = SceneManager;
 
 },{"../util/fsm":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/util/fsm.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/scenes/connecting.js":[function(require,module,exports){
-var Score = require('../entities/score');
+var Text = require('../entities/text');
 
 function ConnectingScene(app, container) {
-    var connectingText = Score(1024, 700, 'Connecting...');
+    var connectingText = Text(1024, 700, 'Connecting...');
 
     this.enter = function(done) {
         container.add(connectingText);
@@ -1138,7 +1154,7 @@ function ConnectingScene(app, container) {
 
 module.exports = ConnectingScene;
 
-},{"../entities/score":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/score.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/scenes/end.js":[function(require,module,exports){
+},{"../entities/text":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/text.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/scenes/end.js":[function(require,module,exports){
 function EndScene(app, container) {
     this.enter = function(done) {
         done();
@@ -1152,10 +1168,10 @@ function EndScene(app, container) {
 module.exports = EndScene;
 
 },{}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/scenes/error.js":[function(require,module,exports){
-var Score = require('../entities/score');
+var Text = require('../entities/text');
 
 function ErrorScene(app, container) {
-    var message = Score(1024, 700, 'Error :(');
+    var message = Text(1024, 700, 'Error :(');
 
     this.enter = function(done) {
         container.add(message);
@@ -1169,19 +1185,21 @@ function ErrorScene(app, container) {
 
 module.exports = ErrorScene;
 
-},{"../entities/score":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/score.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/scenes/game.js":[function(require,module,exports){
+},{"../entities/text":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/text.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/scenes/game.js":[function(require,module,exports){
 var EffectPile = require('../entities/effect-pile');
 var ScorePile = require('../entities/score-pile');
-var Score = require('../entities/score');
+var Text = require('../entities/text');
+var Background = require('../entities/background');
+var Board = require('../entities/board');
 var Card = require('../entities/card');
 
 var effectCardPos = [
-    { x : 800, y : 700 },
-    { x : 1024, y : 930 },
-    { x : 1248, y : 700 }
+    { x : 768, y : 768 },
+    { x : 1024, y : 1024 },
+    { x : 1280, y : 768 }
 ];
 
-var scoreCardPos = { x : 1024, y : 700 };
+var scoreCardPos = { x : 1024, y : 768 };
 
 function GameScene(app, container) {
     // Effect card slots
@@ -1197,8 +1215,11 @@ function GameScene(app, container) {
     var scorePile = ScorePile(scoreCardPos.x, scoreCardPos.y);
     var scoreCard;
 
-    var deck = Score(700, 240, 'Dealing');
-    var turn = Score(700, 300, 'Waiting to start');
+    var deck = Text(1024, 240, 'Dealing');
+    var turn = Text(1024, 300, 'Waiting to start');
+
+    var bg = Background();
+    var board = Board(1024, 768, 'base');
     
     // Subscribe to gameplay topics
     var turnSub;
@@ -1227,6 +1248,9 @@ function GameScene(app, container) {
     });
 
     this.enter = function(done) {
+        container.add(bg);
+        container.add(board);
+
         // Setup board
         effectPiles.forEach(container.add);
         container.add(scorePile);
@@ -1291,13 +1315,13 @@ function GameScene(app, container) {
 
 module.exports = GameScene;
 
-},{"../entities/card":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/card.js","../entities/effect-pile":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/effect-pile.js","../entities/score":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/score.js","../entities/score-pile":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/score-pile.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/scenes/join.js":[function(require,module,exports){
-var Score = require('../entities/score');
+},{"../entities/background":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/background.js","../entities/board":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/board.js","../entities/card":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/card.js","../entities/effect-pile":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/effect-pile.js","../entities/score-pile":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/score-pile.js","../entities/text":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/text.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/scenes/join.js":[function(require,module,exports){
+var Text = require('../entities/text');
 var Background = require('../entities/background');
 var Board = require('../entities/board');
 
 function JoinScene(app, container) {
-    var message = Score(1024, 700, 'Joining game');
+    var message = Text(1024, 700, 'Joining game');
 
     var playerSub;
     var playerReady;
@@ -1312,7 +1336,7 @@ function JoinScene(app, container) {
         container.add(bg);
         container.add(board);
         container.add(message);
-   
+
         playerReady = function(res, topic) {
             var session = topic.split('/')[1];
 
@@ -1329,7 +1353,7 @@ function JoinScene(app, container) {
             } else if (res.type === 'PLAYER') {
                 app.game.addParticipant(session, res.turn); 
             }
-        }    
+        }
 
         playerLeft = function(reason, topic) {
             var session = topic.split('/')[1];
@@ -1356,15 +1380,17 @@ function JoinScene(app, container) {
 
 module.exports = JoinScene;
 
-},{"../entities/background":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/background.js","../entities/board":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/board.js","../entities/score":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/score.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/scenes/title.js":[function(require,module,exports){
+},{"../entities/background":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/background.js","../entities/board":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/board.js","../entities/text":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/text.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/scenes/title.js":[function(require,module,exports){
 var Title = require('../entities/title');
 var JoinBtn = require('../entities/button.js');
 var Board = require('../entities/board');
 var Background = require('../entities/background');
+var Text = require('../entities/text');
 
 function TitleScene(app, container) {
     var title = Title(1024, 768, '{resnappt}');
-    var ready = JoinBtn(1024, 1025);
+    var ready = JoinBtn(1024, 1015);
+    var joinText = Text(0, 0, "\u0080");
     var bg = Background();
     var boardDark = Board(1024, 768, 'dark');
     var boardLight = Board(1024, 768, 'light');
@@ -1389,6 +1415,7 @@ function TitleScene(app, container) {
         boardDark.sprite.blendMode = PIXI.blendModes.MULTIPLY;
 
         app.transport.establishCommandTopic(function() {
+            ready.sprite.addChild(joinText.sprite);
             container.add(ready);
             done();
         });
@@ -1427,7 +1454,7 @@ function TitleScene(app, container) {
 
 module.exports = TitleScene;
 
-},{"../entities/background":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/background.js","../entities/board":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/board.js","../entities/button.js":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/button.js","../entities/title":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/title.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/service-manager.js":[function(require,module,exports){
+},{"../entities/background":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/background.js","../entities/board":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/board.js","../entities/button.js":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/button.js","../entities/text":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/text.js","../entities/title":"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/entities/title.js"}],"/Users/tmclaughlan/DEMOWEEK/resnappt/src/client/game/service-manager.js":[function(require,module,exports){
 function ServiceManager(app) {
     var servicesForEvents = {};
     var servicesForTick = [];

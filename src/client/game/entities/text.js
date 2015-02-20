@@ -1,18 +1,18 @@
 var Entity = require('./entity');
 
-var Score = Entity.type('Score', {
+var Text = Entity.type('Text', {
     style : {
         font : "bold 64px LibianRunic",
         fill : "white"
     } 
 });
 
-function ScoreFactory(x, y, text) {
-    return Entity.createText(Score, {
+function TextFactory(x, y, text) {
+    return Entity.createText(Text, {
         x : x,
         y : y,
         text : text
     });
 };
 
-module.exports = ScoreFactory;
+module.exports = TextFactory;

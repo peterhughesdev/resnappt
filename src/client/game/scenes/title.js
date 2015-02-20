@@ -2,10 +2,12 @@ var Title = require('../entities/title');
 var JoinBtn = require('../entities/button.js');
 var Board = require('../entities/board');
 var Background = require('../entities/background');
+var Text = require('../entities/text');
 
 function TitleScene(app, container) {
     var title = Title(1024, 768, '{resnappt}');
-    var ready = JoinBtn(1024, 1025);
+    var ready = JoinBtn(1024, 1015);
+    var joinText = Text(0, 0, "\u0080");
     var bg = Background();
     var boardDark = Board(1024, 768, 'dark');
     var boardLight = Board(1024, 768, 'light');
@@ -30,6 +32,7 @@ function TitleScene(app, container) {
         boardDark.sprite.blendMode = PIXI.blendModes.MULTIPLY;
 
         app.transport.establishCommandTopic(function() {
+            ready.sprite.addChild(joinText.sprite);
             container.add(ready);
             done();
         });

@@ -1,9 +1,9 @@
-var Score = require('../entities/score');
+var Text = require('../entities/text');
 var Background = require('../entities/background');
 var Board = require('../entities/board');
 
 function JoinScene(app, container) {
-    var message = Score(1024, 700, 'Joining game');
+    var message = Text(1024, 700, 'Joining game');
 
     var playerSub;
     var playerReady;
@@ -18,7 +18,7 @@ function JoinScene(app, container) {
         container.add(bg);
         container.add(board);
         container.add(message);
-   
+
         playerReady = function(res, topic) {
             var session = topic.split('/')[1];
 
@@ -35,7 +35,7 @@ function JoinScene(app, container) {
             } else if (res.type === 'PLAYER') {
                 app.game.addParticipant(session, res.turn); 
             }
-        }    
+        }
 
         playerLeft = function(reason, topic) {
             var session = topic.split('/')[1];
