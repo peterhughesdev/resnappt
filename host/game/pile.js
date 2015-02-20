@@ -2,11 +2,12 @@ function Pile() {
 
     var top = null;
 
+    var state = null;
     var effects = [];
 
     this.init = function(card) {
         top = card;
-        var state = {top : top};
+        state = {top : top};
     };
 
     this.getTop = function() {
@@ -17,12 +18,20 @@ function Pile() {
         return effects;
     };
 
+    this.getState = function() {
+        return state;
+    };
+
     this.playEffect = function(card) {
         if (effects.length < 3) {
             effects[effects.length] = card;
             return true;
         }
         return false;
+    };
+
+    this.matchRunes = function() {
+        return matchRunes(state.top.modrune, state.played.modrune);
     };
 
     var matchRunes = function(runeA, runeB) {
@@ -38,17 +47,17 @@ function Pile() {
     };
 
     this.play = function(card, reduce) {
-        var state = {
+        state = {
             top : top,
             played : card,
-            newCard : false,
-            prevScore : false,
-            snap : true
+            riposte : false,
+            duplication : false,
+            guard : false
         };
 
         state.top.modrune = state.top.rune;
         state.played.modrune = state.played.rune;
-        state.snap = true;
+        state.played.modvalue = state.played.value;
 
         for (var e in effects) {
             effects[e].execute(state, reduce);
@@ -62,7 +71,7 @@ function Pile() {
         var topRune = state.top.modrune;
         var playedRune = state.played.modrune;
         if (matchRunes(topRune, playedRune)) {
-            state.score = state.played.value;
+            state.score = state.played.modvalue;
         }
 
         top = card;

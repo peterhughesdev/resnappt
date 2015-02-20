@@ -84,3 +84,112 @@ Effect : If a player matches, the previous player receives the same score
     - Handles card assignment
     - Assigns topic permissions to players for public/private data
 
+## Topics and data
+
+### Sessions
+
+- sessions/[sessionID]
+    - Created by the client session
+    - Server responds with a JSON object
+            
+            {
+                type : 'PLAYER',
+                turn : turnIndex
+            }
+        or
+            {
+                type : 'SPECTATOR'
+            }
+
+- sessions/[sessionID]/command
+    - Created by the client session
+    - Client sends commands on this topic, as a JSON object
+
+            {
+                command : 'READY'
+            }
+
+            {
+                command : 'SNAP'
+            }
+
+            {
+                command : 'PLAY',
+                message : {
+                    card : 1,
+                    pile : pile
+                }
+            }
+        where pile can be 'EFFECT' or 'SCORE'
+
+- sessions/[sessionID]/score
+    - The score of the specified player
+    - Integer
+
+- sessions/[sessionID]/hand
+    - An array of cards in the players hand
+    - JSON
+
+            [{
+                effect : {
+                    name : 'effectName',
+                    duration : 3
+                },
+                index : 1,
+                rune : 'a',
+                value : 8
+            }]
+
+### Game
+- turn
+    - Updated with the sessionID of the player whose turn it is
+    - String
+
+- deck
+    - Updated with the number of cards remaining in the deck
+    - Integer
+
+- pile/score
+    - Publishes the card currently on top of the score pile
+    - JSON
+
+            {
+                effect : {
+                    name : 'effectName',
+                    duration : 3
+                },
+                index : 1,
+                rune : 'a',
+                value : 8
+            }
+
+- pile/effect
+    - An array of effect cards currently in play
+    - JSON
+
+            [{
+                effect : {
+                    name : 'effectName',
+                    duration : 1
+                },
+                index : 1,
+                rune : 'a',
+                value : 8
+            }]
+
+- snap/timer
+    - The current value of the snap timer. Starts at 5, ends on 0. 0 When not in use
+    - Integer
+
+- snap/winner
+    - The sessionID of the winner of the current snap round
+    - String
+
+- summary
+    - A summary of scores for all of the players, published at the end of the game
+    - JSON
+
+            [{
+                playerID : [player's sessionID],
+                score : 42
+            }]

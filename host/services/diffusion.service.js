@@ -27,7 +27,10 @@ exports.start = function() {
 
     session = diffusion.connect(options);
 
-    session.on('connect', connected);
+    session.on('connect', connected)
+    .on('close', sessionClosed)
+    .on('disconnect', sessionDisconnected)
+    .on('error', sessionError);
 };
 
 exports.cleanup = function() {
@@ -37,27 +40,41 @@ exports.cleanup = function() {
 var connected = function() {
     console.log('diffusion connected', session.isConnected());
     var subscription = session.subscribe('?sessions/.*')
-    .on('subscribed', sessionsAdded)
-    .on('unsubscribed', sessionsUnsubscribed);
+    .on('subscribed', playerAdded)
+    .on('unsubscribed', playerUnsubscribed);
 
     session.subscribe('?sessions/.*/command')
     .transform(JSON.parse)
-    .on('update', sessionCommand);
+    .on('update', playerCommand);
 
     createTopicTree();
 };
 
-var sessionsAdded = function(message, topic) {
+var sessionClosed = function(reason) {
+    console.log('Diffusion session closed');
+    console.log(reason);
+};
+
+var sessionDisconnected = function() {
+    console.log('Diffusion session disconnected');
+};
+
+var sessionError = function(err) {
+    console.log('Diffusion session error');
+    console.log(err);
+};
+
+var playerAdded = function(message, topic) {
     var sessionID = topic.split('sessions/')[1];
     emitter.emit('playerJoined', sessionID);
 };
 
-var sessionsUnsubscribed = function(reason, topic) {
+var playerUnsubscribed = function(reason, topic) {
     var sessionID = topic.split('sessions/')[1];
     emitter.emit('playerLeft', sessionID);
 };
 
-var sessionCommand = function(message, topic) {
+var playerCommand = function(message, topic) {
     var sessionID = topic.split('/')[1];
     emitter.emit('playerCommand', sessionID, message);
 };
@@ -85,6 +102,14 @@ var createTopicTree = function() {
     }
 };
 
+exports.registerPlayer = function(playerID, turn) {
+    publish('sessions/'+playerID, JSON.stringify({type : 'PLAYER', turn:turn}));
+};
+
+exports.registerSpectator = function(playerID) {
+    publish('sessions/'+playerID, JSON.stringify({type : 'SPECTATOR'}));
+};
+
 exports.publishSnapper = function(playerID) {
     publish('snap/winner', playerID);
 };
@@ -110,7 +135,6 @@ exports.nextTurn = function(playerID) {
 };
 
 exports.topOfPile = function(card) {
-    console.log(card);
     publish('pile/score', JSON.stringify(card.toData()));
 };
 
@@ -128,5 +152,4 @@ exports.updateScore = function(player) {
 
 var publish = function(topic, data) {
     session.topics.update(topic, data);
-    console.log('publishing '+topic+' with '+data);
 };

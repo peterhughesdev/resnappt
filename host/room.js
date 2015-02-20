@@ -5,10 +5,13 @@ var game = new Game();
 
 var diffusion = null;
 
+// a list of playerIDs viewing the rooms
+var interest = [];
+
 exports.initRoom = function(df) {
     diffusion = df;
     diffusion.init()
-    .on('playerJoined', addPlayer)
+    .on('playerJoined', registerInterest)
     .on('playerLeft', removePlayer)
     .on('playerCommand', playerCommand);
 };
@@ -30,41 +33,40 @@ var endGame = function() {
     diffusion.cleanup();
     diffusion.start();
     game = new Game();
+    interest = [];
+    playerService.removeAllPlayers();
+};
+
+var registerInterest = function(playerID) {
+    interest[interest.length] = playerID;
 };
 
 var addPlayer = function(playerID) {
+    var turn = playerService.getNPlayers();
     if (!game.isPlaying()) {
-        playerService.createPlayer(playerID)
-        .on('ready', checkReadiness)
+        playerService.createPlayer(playerID, turn)
         .on('score', diffusion.updateScore);
+        diffusion.registerPlayer(playerID, turn);
+        checkReadiness();
     }
     else {
         playerService.addSpectator(playerID);
+        diffusion.registerSpectator(playerID);
     }
 };
 
-var checkReadiness = function(playerID) {
-    console.log(playerID + ' ready!');
-
-    var players = playerService.getAllPlayers();
-
-    var allReady = true;
-    for (var p in players) {
-        if (!players[p].isReady()) {
-            allReady = false;
-        }
-    }
-    if (playerService.getNPlayers() < 2) {
-        allReady = false;
-    }
-
-    if (allReady) {
+var checkReadiness = function() {
+    console.log('interested parties = '+interest.length);
+    console.log('registered players = '+playerService.getNPlayers());
+    if ((playerService.getNPlayers() === interest.length && playerService.getNPlayers() > 1)
+      || playerService.getNPlayers() === 4) {
         finaliseRoom();
     }
 
 };
 
 var removePlayer = function(playerID) {
+    interest.splice(interest.indexOf(playerID),1);
     playerService.removePlayer(playerID);
 
     if (playerService.getNPlayers() < 1) {
@@ -80,12 +82,7 @@ var playerCommand = function(playerID, data) {
         game.playCard(playerID, data.message.card, data.message.pile);
         break;
     case 'READY':
-        var player = playerService.getPlayer(playerID);
-        if (player) {
-            player.ready();
-        } else {
-            console.log('Unregistered player called ready');
-        }
+        addPlayer(playerID);
         break;
     case 'SNAP':
         game.snap(playerID);
