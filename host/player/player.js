@@ -9,6 +9,7 @@ function Player(id, turn) {
     var emitter = new events.EventEmitter();
 
     var ready = false;
+    this.finished = false;
 
     var canSnap = true;
 
@@ -24,8 +25,6 @@ function Player(id, turn) {
         }
         return card[0];
     };
-
-    this.finished = false;
 
     this.addCard = function(card) {
         hand[hand.length] = card;

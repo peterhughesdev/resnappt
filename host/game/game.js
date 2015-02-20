@@ -87,7 +87,6 @@ function Game() {
             console.log('card played not in play phase');
             return;
         }
-        console.log(player);
 
         if (player.playerID !== playerID) {
             console.log('Not player '+playerID+' turn');
