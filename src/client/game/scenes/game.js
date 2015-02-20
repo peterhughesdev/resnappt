@@ -1,15 +1,17 @@
 var EffectPile = require('../entities/effect-pile');
 var ScorePile = require('../entities/score-pile');
-var Score = require('../entities/score');
+var Text = require('../entities/text');
+var Background = require('../entities/background');
+var Board = require('../entities/board');
 var Card = require('../entities/card');
 
 var effectCardPos = [
-    { x : 800, y : 700 },
-    { x : 1024, y : 930 },
-    { x : 1248, y : 700 }
+    { x : 768, y : 768 },
+    { x : 1024, y : 1024 },
+    { x : 1280, y : 768 }
 ];
 
-var scoreCardPos = { x : 1024, y : 700 };
+var scoreCardPos = { x : 1024, y : 768 };
 
 function GameScene(app, container) {
     // Effect card slots
@@ -25,8 +27,11 @@ function GameScene(app, container) {
     var scorePile = ScorePile(scoreCardPos.x, scoreCardPos.y);
     var scoreCard;
 
-    var deck = Score(700, 240, 'Dealing');
-    var turn = Score(700, 300, 'Waiting to start');
+    var deck = Text(1024, 240, 'Dealing');
+    var turn = Text(1024, 300, 'Waiting to start');
+
+    var bg = Background();
+    var board = Board(1024, 768, 'base');
     
     // Subscribe to gameplay topics
     var turnSub;
@@ -45,6 +50,9 @@ function GameScene(app, container) {
     });
 
     this.enter = function(done) {
+        container.add(bg);
+        container.add(board);
+
         // Setup board
         effectPiles.forEach(container.add);
         container.add(scorePile);

@@ -1,7 +1,7 @@
-var Score = require('../entities/score');
+var Text = require('../entities/text');
 
 function ErrorScene(app, container) {
-    var message = Score(1024, 700, 'Error :(');
+    var message = Text(1024, 700, 'Error :(');
 
     this.enter = function(done) {
         container.add(message);
