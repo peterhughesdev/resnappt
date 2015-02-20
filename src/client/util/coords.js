@@ -1,32 +1,25 @@
 // Reference screen size
-var refW = 1100;
-var refH = 1100;
+var refW = 2048;
+var refH = 1536;
 
 // Viewport render dimensions (pixels)
-var width = Math.max(window.innerWidth, document.body.clientWidth, refW);
-var height = Math.max(window.innerHeight, document.body.clientHeight, refH);
+var width = Math.max(window.innerWidth, document.body.clientWidth);
+var height = Math.max(window.innerHeight, document.body.clientHeight);
 
 // Midpoint from screen space
 var midW = width / 2;
 var midH = height / 2;
 
-var ratio = Math.min(width / refW, height / refH);
 
 function ratio(w, h) {
     return h / w;
 }
 
 function scaleSize(w, h) {
-    var r = ratio(w, h);
-    var p = w * 100 / refW;
-    
-    var nw = p / 100 * width;
-    var nh = nw * r;
+    var dw = w / refW;
+    var dh = h / refH;
 
-    return {
-        width : nw,
-        height : nh
-    };
+    return dh < dw ? { x : dh, y : dh } : { x : dw, y : dw };
 }
 
 function translateToScreen(x, y) {

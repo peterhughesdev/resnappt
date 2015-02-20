@@ -1,18 +1,8 @@
 var EventEmitter = require('events').EventEmitter;
 
-var options = {
-    host : 'quickwittedAres.cloud.spudnub.com',
-    ssl : false,
-    reconnect : false,
-    credentials : {
-        principal : 'client',
-        password : 'client'
-    }
-};
-
 var log = console.log.bind(console);
 
-function Transport() {
+function Transport(options) {
     EventEmitter.call(this);
 
     var sessionTopic = null;
@@ -20,6 +10,24 @@ function Transport() {
 
     var session = null;
     var self = this;
+
+
+    this.connect = function() {
+        diffusion.connect(options).on('connect', function(sess) {
+            session = sess;
+            
+            window.onclose = function() {
+                session.close();
+            };
+
+            self.sessionID = session.sessionID;
+            self.emit('connect');
+        }).on('error', function(e) {
+            self.emit('error', e);
+        }).on('close', function(e) {
+            self.emit('close', e);
+        });
+    };
 
     this.dispatch = function(command, message) {
         log(command, message);
@@ -30,49 +38,39 @@ function Transport() {
         }));
     };
 
-    this.listen = function(event, message) {
-    
-    };
-
     this.player = function(topic, type, cb) {
         return this.subscribe(sessionTopic + '/' + topic, type, cb);
     };
 
     this.subscribe = function(topic, type, cb) {
-        return session.subscribe(topic).on('error', log).transform(type).on('update', cb);
+        var sub = session.subscribe(topic).on('error', log).transform(type);
+        
+        if (cb) {
+            sub.on('update', cb);
+        }
+
+        return sub;
     };
 
     this.unsubscribe = function(topic) {
         return session.unsubscribe(topic);
     };
 
-    this.init = function() {
-        diffusion.connect(options).on('connect', function(sess) {
-            session = sess;
+    this.establishCommandTopic = function(callback) {
+        sessionTopic = 'sessions/' + session.sessionID;
+        commandTopic = sessionTopic + '/command';
 
-            window.onclose = function() {
-                console.log("Calling session.close");
-                session.close();
-            };
 
-            var sessionID = session.sessionID;
-            self.sessionID = sessionID;
-
-            sessionTopic = 'sessions/' + sessionID;
-            commandTopic = sessionTopic + '/command';
-
-            session.topics.removeWithSession(sessionTopic).on('complete', function() {
-                session.topics.add(sessionTopic).on('complete', function() {
-                    session.topics.add(sessionTopic + '/command').on('complete', function() {
-                        session.topics.add(sessionTopic + '/hand').on('complete', function() {
-                            session.topics.add(sessionTopic + '/score', 0).on('complete', function() {
-                                self.emit('active');
-                            }).on('error', log);
-                        }).on('error', log);
+        // Oh dear lord
+        session.topics.removeWithSession(sessionTopic).on('complete', function() {
+            session.topics.add(sessionTopic).on('complete', function() {
+                session.topics.add(sessionTopic + '/command').on('complete', function() {
+                    session.topics.add(sessionTopic + '/hand').on('complete', function() {
+                        session.topics.add(sessionTopic + '/score', 0).on('complete', callback).on('error', log);
                     }).on('error', log);
                 }).on('error', log);
-            }).on('error', log); 
-        });
+            }).on('error', log);
+        }).on('error', log); 
     };
 }
 

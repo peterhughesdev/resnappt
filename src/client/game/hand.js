@@ -4,10 +4,10 @@ function Hand(game, x, y) {
     var cards = [];
     var cardByIndex = {};
 
-    function create(data, i) {
-        var card = Card(x, y, data.index, data.effect.name, "",  data.rune, data.value, data.effect.duration);
+    function create(data) {
+        var card = Card(x, y, data);
         
-        game.render(card);
+        game.renderer.add(card);
         cards.push(card); 
     }
 
@@ -22,7 +22,7 @@ function Hand(game, x, y) {
 
     this.add = function(data) {
         if (cardByIndex[data.index] === undefined) {
-            create(data, cards.length);
+            create(data);
             
             cards.forEach(reposition);
             cards.forEach(reassign);

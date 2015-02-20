@@ -5,7 +5,7 @@ var EntityID = 0;
 var baseEntity = {
     width : 100,
     height : 100,
-    interactive : true
+    interactive : false 
 };
 
 function extend(base, target) {
@@ -44,10 +44,10 @@ Entity.type = function(name, base, attributes) {
 
 function setSpriteProperties(type, properties, sprite) {
     // Normalise position according to screen space
-    var norm = coords.translateToScreen(properties.x, properties.y);
+    //var norm = coords.translateToScreen(properties.x, properties.y);
     
-    sprite.position.x = norm.x;
-    sprite.position.y = norm.y;
+    sprite.position.x = properties.x; //norm.x;
+    sprite.position.y = properties.y; //norm.y;
    
     sprite.interactive = type.interactive;
 

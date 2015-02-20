@@ -1,6 +1,14 @@
-var Game = require('./game');
+var options = {
+    debug : false,
 
-diffusion.log('silent');
+    host : 'quickwittedAres.cloud.spudnub.com',
+    ssl : false,
+    reconnect : false,
+    credentials : {
+        principal : 'client',
+        password : 'client'
+    }
+};
 
+var app = require('./resnappt')(options);
 
-var game = new Game();

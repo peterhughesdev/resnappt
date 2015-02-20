@@ -1,26 +1,36 @@
 var coords = require('../util/coords');
+var curry = require('../util/curry');
 
 var Type = {
     ADD : 0,
     REMOVE : 1
 };
 
-var sl = Array.prototype.slice;
-
-function curry () {
-    var args = sl.call(arguments, 0);
-    var fn = args.shift();
-
-    return function() {
-        fn.apply(fn, args.concat(sl.call(arguments, 0)));
-    }
-};
-
-function Renderer(game, width, height) {
-    var renderer = PIXI.autoDetectRenderer(width, height); 
+function Renderer(app) {
+    var renderer = PIXI.autoDetectRenderer(coords.width, coords.height); 
     var stage = new PIXI.Stage('#000000', true);
 
-    stage.scale = new PIXI.Point();
+    var container = new PIXI.DisplayObjectContainer();
+    stage.addChild(container);
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('deviceOrientation', resize);
+
+    function resize() {
+        var width = Math.max(window.innerWidth, document.body.clientWidth);
+        var height = Math.max(window.innerHeight, document.body.clientHeight);
+
+        renderer.resize(width, height);
+
+        var scale = coords.scaleSize(width, height);
+        
+        container.scale.x = scale.x;
+        container.scale.y = scale.y;
+
+        container.pivot.x = 0.5;
+        container.pivot.y = 0.5;
+    }
+
 
     var running = false;
 
@@ -31,34 +41,20 @@ function Renderer(game, width, height) {
     var touchEvents = ['start', 'end'];
     var clickEvents = ['click', 'tap'];
 
-    function attachListeners(entity) {
-        mouseEvents.forEach(function(e) {
-            entity.sprite['mouse' + e] = curry(game.emit.bind(game), 'mouse:' + e, entity);
-        });
-
-        touchEvents.forEach(function(e) {
-            entity.sprite['touch' + e] = curry(game.emit.bind(game), 'touch:' + e, entity);
-        });
-
-        clickEvents.forEach(function(e) {
-            entity.sprite[e] = curry(game.emit, e, entity);
-        });
-    }
-
-    mouseEvents.forEach(function(e) {
-        stage['mouse' + e] = curry(game.emit.bind(game), 'mouse:' + e);
-    });
+    this.onTick = function() { }
+    
+    var self = this;
+    var pT = Date.now();
 
     function tick() {
         pending.forEach(function(action) {
             switch (action.type) {
                 case Type.ADD :
-                    //attachListeners(action.entity);
-                    stage.addChild(action.entity.sprite);
+                    container.addChild(action.entity.sprite);
                     entities.push(action.entity);
                     break;
                 case Type.REMOVE :
-                    stage.removeChild(action.entity.sprite);
+                    container.removeChild(action.entity.sprite);
 
                     var i = entities.indexOf(action.entity);
                     if (i > -1) {
@@ -71,8 +67,11 @@ function Renderer(game, width, height) {
 
         pending = [];
 
-        entities.forEach(function(entity) {
-        });
+        var t = Date.now();
+        
+        self.onTick(t - pT);
+
+        pT = t;
 
         renderer.render(stage);
 
@@ -95,13 +94,21 @@ function Renderer(game, width, height) {
         });
     };
 
-    this.init = function() {
+    this.init = function(onEvent, onTick) {
         document.body.appendChild(renderer.view);
-        
+        resize();
+
+        mouseEvents.forEach(function(e) {
+            stage['mouse' + e] = curry(onEvent, 'mouse:' + e);
+        });
+
+        self.onTick = onTick;
+
         requestAnimationFrame(tick);
         running = true;
     };
 
+    // Really simple bounding box
     function intersects(sprite, x, y) {
         var sw = sprite.width / 2;
         var sh = sprite.height / 2;
@@ -112,11 +119,16 @@ function Renderer(game, width, height) {
         return ((x >= sx - sw && x <= sx + sw) && (y >= sy - sh && y <= sy + sh));
     }
 
-    this.getEntitiesForPos = function(x, y) {
+    this.getEntities = function() {
+        return entities;
+    };
+
+    this.getEntitiesForPos = function(data) {
+        var pos = data.getLocalPosition(container);
         var hit = [];
 
         for (var i = 0; i < entities.length; ++i) {
-            if (intersects(entities[i].sprite, x, y)) {
+            if (intersects(entities[i].sprite, pos.x, pos.y)) {
                 hit.push(entities[i]);
             }
         }
@@ -124,10 +136,14 @@ function Renderer(game, width, height) {
         return hit;
     };
 
-    this.getEntityForPos = function(x, y) {
-        var entities = this.getEntitiesForPos(x, y);
+    this.getEntityForPos = function(data) {
+        var entities = this.getEntitiesForPos(data);
         return entities[0];
-    }
+    };
+
+    this.getLocalPosition = function(data) {
+        return data.getLocalPosition(container);
+    };
 }
 
 module.exports = Renderer;
