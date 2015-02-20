@@ -17,6 +17,16 @@ exports.initRoom = function(df) {
 };
 
 var finaliseRoom = function() {
+    var players = [];
+
+    var registered = playerService.getAllPlayers();
+
+    for (var p in registered) {
+        players[players.length] = { playerID : registered[p].playerID, turn : registered[p].turn };
+    }
+
+    diffusion.startGame(players);
+
     game.on('updatePile', diffusion.topOfPile)
     .on('updateTurn', diffusion.nextTurn)
     .on('updateHand', diffusion.drawCard)

@@ -1390,7 +1390,7 @@ var Text = require('../entities/text');
 function TitleScene(app, container) {
     var title = Title(1024, 768, '{resnappt}');
     var ready = JoinBtn(1024, 1015);
-    var joinText = Text(0, 0, "\u0080");
+    var joinText = Text(0, 0, "join");
     var bg = Background();
     var boardDark = Board(1024, 768, 'dark');
     var boardLight = Board(1024, 768, 'light');
