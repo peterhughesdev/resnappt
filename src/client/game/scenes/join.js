@@ -1,14 +1,22 @@
 var Score = require('../entities/score');
+var Background = require('../entities/background');
+var Board = require('../entities/board');
 
 function JoinScene(app, container) {
     var message = Score(1024, 700, 'Joining game');
 
     var playerSub;
-
     var playerReady;
     var playerLeft;
 
+    var bg = Background();
+    var board = Board(1024, 768, 'base');
+
+    var handler;
+
     this.enter = function(done) {
+        container.add(bg);
+        container.add(board);
         container.add(message);
    
         playerReady = function(res, topic) {

@@ -1,8 +1,8 @@
 var Entity = require('./entity');
 
 var Button = Entity.type('Button', {
-    width : 240,
-    height : 120,
+    width : 145,
+    height : 149,
     texture : '/images/join-btn.png'
 });
 

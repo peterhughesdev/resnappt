@@ -41,7 +41,7 @@ function mouseup(e, app, ctx, data) {
 
         if (app.getState() === 'connected') {
             // Join the game
-            if (bottom.type.id  === Entity.Types.Button) {
+            if (entity.type.id  === Entity.Types.Button) {
                 app.transition('joining');
             }    
        }

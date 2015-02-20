@@ -1,3 +1,8 @@
+@font-face {
+  font-family: 'LibianRunic';
+  src: url('/fonts/LibianRunic.ttf');
+}
+
 body {
   padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;

@@ -2,8 +2,8 @@ var Entity = require('./entity');
 
 var Score = Entity.type('Score', {
     style : {
-        font : "bold 40px Arial",
-        fill : "red"
+        font : "bold 64px LibianRunic",
+        fill : "white"
     } 
 });
 
