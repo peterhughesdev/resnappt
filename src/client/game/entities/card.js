@@ -76,7 +76,7 @@ function CardFactory(x, y, data) {
         text : "" 
     });
 
-    var texture = '/images/cards/' + data.name.toLowerCase() + '.png';
+    var texture = '/images/cards/' + data.effect.name.toLowerCase() + '.png';
 
     var card = Entity.create(Card, {
         x : x,

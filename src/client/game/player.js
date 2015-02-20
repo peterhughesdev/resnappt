@@ -1,5 +1,5 @@
 var PlayerGUI = require('./entities/player-gui');
-var Score = require('./entities/score');
+var Text = require('./entities/text');
 
 var Hand = require('./hand');
 
@@ -14,13 +14,13 @@ var playerPosition = [
 function Player(app, session, turn) { 
     var pos = playerPosition[turn];
 
-    var score = Score(0, 80, '0');
-    var name = Score(0, 80, 'Player ' + turn);
-    var icon = Score(200, 0, 'Playing');
+    var score = Text(0, 80, '0');
+    var name = Text(0, 80, 'Player ' + turn);
+    var icon = Text(200, 0, 'Playing');
 
     var gui = PlayerGUI(pos.x, pos.y, name, score, icon);
 
-    var hand = new Hand(app, pos.x + 20, pos.y + 20);
+    var hand = new Hand(app, pos.x, pos.y);
 
     var topic = 'sessions/' + session + '/';
     var active = false;

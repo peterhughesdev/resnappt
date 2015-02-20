@@ -3,7 +3,7 @@ var Entity = require('./entity');
 var GUI = Entity.type('PlayerGUI', {
     width : 400,
     height : 200,
-    texture : '/images/effect-placement.png'
+    texture : '/images/join-btn.png'
 });
 
 function GUIFactory(x, y, name, score, icon) {

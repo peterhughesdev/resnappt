@@ -44,12 +44,12 @@ function Transport(options) {
     };
 
     this.subscribe = function(topic, type, cb) {
-        var sub = session.subscribe(topic).on('error', log).transform(type);
+        var sub = session.subscribe(topic, log).on('error', log).transform(type);
         
         if (cb) {
             sub.on('update', cb);
         }
-
+        console.log('Subscribing to topic: ' + topic);
         return sub;
     };
 
@@ -64,10 +64,10 @@ function Transport(options) {
 
         // Oh dear lord
         session.topics.removeWithSession(sessionTopic).on('complete', function() {
-            session.topics.add(sessionTopic).on('complete', function() {
-                session.topics.add(sessionTopic + '/command').on('complete', function() {
-                    session.topics.add(sessionTopic + '/hand').on('complete', function() {
-                        session.topics.add(sessionTopic + '/score', 0).on('complete', callback).on('error', log);
+            session.topics.add(sessionTopic, '').on('complete', function() {
+                session.topics.add(sessionTopic + '/command', '').on('complete', function() {
+                    session.topics.add(sessionTopic + '/hand', JSON.stringify([])).on('complete', function() {
+                        session.topics.add(sessionTopic + '/score', JSON.stringify(0)).on('complete', callback).on('error', log);
                     }).on('error', log);
                 }).on('error', log);
             }).on('error', log);

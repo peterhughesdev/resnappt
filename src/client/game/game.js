@@ -70,6 +70,8 @@ function Game(app) {
                 }
             });
         }
+
+        fsm.change('playing');
     };
 
     this.addParticipant = function(session, turn, isPlayer) {
