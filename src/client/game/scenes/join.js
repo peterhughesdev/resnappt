@@ -12,7 +12,7 @@ function JoinScene(app, container) {
         handler = function(res) {
             switch (res.type) {
                 case 'PLAYER' :
-                    //app.player = new Player(res.turn);
+                    app.game.playing(res.turn);
                     app.transition('playing');
                     break;
                 default :
@@ -21,10 +21,13 @@ function JoinScene(app, container) {
             }
         }    
 
-        playerSub = app.transport.player('command', JSON.parse, handler);
-        app.game.player.ready();
+        playerSub = app.transport.player(null, JSON.parse, handler);
         
         done();
+
+        // Put this here because so we're guaranteed that the scene transition
+        // has completed by the time we receive the status response
+        app.game.player.ready();
     };
 
     this.leave = function(done) {

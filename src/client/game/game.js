@@ -39,6 +39,10 @@ function Game(app) {
 
         return fsm.change('starting');
     };
+
+    this.playing = function(index) {
+        self.player.index = index;
+    };
 }
 
 Game.prototype = new EventEmitter();

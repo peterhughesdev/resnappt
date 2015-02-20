@@ -39,7 +39,8 @@ function Transport(options) {
     };
 
     this.player = function(topic, type, cb) {
-        return this.subscribe(sessionTopic + '/' + topic, type, cb);
+        var t = topic ? sessionTopic + '/' + topic : sessionTopic;
+        return this.subscribe(t, type, cb);
     };
 
     this.subscribe = function(topic, type, cb) {

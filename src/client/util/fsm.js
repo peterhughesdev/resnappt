@@ -38,10 +38,11 @@ var EventEmitter = require('events').EventEmitter;
  * @param Object states - The set of possible states to transition between
  */
 function FSM(initial, states) {
-    EventEmitter.call(this);
-    var self = this;
+    var emitter = new EventEmitter(); 
 
     var current = states[initial];
+
+    var self = this;
 
     /**
      * The current state
@@ -65,16 +66,16 @@ function FSM(initial, states) {
             var old = self.state;
 
             self.state = state;
-            self.emit('change', old, state);
+            emitter.emit('change', old, state);
 
             return true;
         }
 
         return false;
     };
-}
 
-FSM.prototype = new EventEmitter();
+    this.on = emitter.on.bind(emitter);
+}
 
 module.exports = {
     create : function create(initial, states) {

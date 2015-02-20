@@ -56,7 +56,8 @@ function Transport(options) {
     };
 
     this.player = function(topic, type, cb) {
-        return this.subscribe(sessionTopic + '/' + topic, type, cb);
+        var t = topic ? sessionTopic + '/' + topic : sessionTopic;
+        return this.subscribe(t, type, cb);
     };
 
     this.subscribe = function(topic, type, cb) {
@@ -380,6 +381,10 @@ function Game(app) {
 
 
         return fsm.change('starting');
+    };
+
+    this.playing = function(index) {
+        self.player.index = index;
     };
 }
 
@@ -899,7 +904,7 @@ function JoinScene(app, container) {
         handler = function(res) {
             switch (res.type) {
                 case 'PLAYER' :
-                    //app.player = new Player(res.turn);
+                    app.game.playing(res.turn);
                     app.transition('playing');
                     break;
                 default :
@@ -908,10 +913,13 @@ function JoinScene(app, container) {
             }
         }    
 
-        playerSub = app.transport.player('command', JSON.parse, handler);
-        app.game.player.ready();
+        playerSub = app.transport.player(null, JSON.parse, handler);
         
         done();
+
+        // Put this here because so we're guaranteed that the scene transition
+        // has completed by the time we receive the status response
+        app.game.player.ready();
     };
 
     this.leave = function(done) {
@@ -1362,10 +1370,11 @@ var EventEmitter = require('events').EventEmitter;
  * @param Object states - The set of possible states to transition between
  */
 function FSM(initial, states) {
-    EventEmitter.call(this);
-    var self = this;
+    var emitter = new EventEmitter(); 
 
     var current = states[initial];
+
+    var self = this;
 
     /**
      * The current state
@@ -1389,16 +1398,16 @@ function FSM(initial, states) {
             var old = self.state;
 
             self.state = state;
-            self.emit('change', old, state);
+            emitter.emit('change', old, state);
 
             return true;
         }
 
         return false;
     };
-}
 
-FSM.prototype = new EventEmitter();
+    this.on = emitter.on.bind(emitter);
+}
 
 module.exports = {
     create : function create(initial, states) {
