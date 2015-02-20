@@ -67,7 +67,7 @@ function CardFactory(x, y, data) {
     var name = Entity.createText(Name, {
         x : -40,
         y : -240,
-        text : data.name 
+        text : data.effect.name 
     });
 
     var desc = Entity.createText(Desc, {
@@ -76,7 +76,7 @@ function CardFactory(x, y, data) {
         text : "" 
     });
 
-    var texture = '/images/cards/' + data.name.toLowerCase() + '.png';
+    var texture = '/images/cards/' + data.effect.name.toLowerCase() + '.png';
 
     var card = Entity.create(Card, {
         x : x,

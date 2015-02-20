@@ -12,28 +12,22 @@ function JoinScene(app, container) {
     var bg = Background();
     var board = Board(1024, 768, 'base');
 
-    var handler;
+    var stateHandle;
+    var playerLeft;
 
     this.enter = function(done) {
         container.add(bg);
         container.add(board);
         container.add(message);
 
-        playerReady = function(res, topic) {
-            var session = topic.split('/')[1];
+        stateHandle = function(res, topic) {
+            console.log(res);
+            if (res.state === 'PLAYING') {
+                res.players.forEach(function(p) {
+                    app.game.addParticipant(p.playerID, p.turn, p.playerID === app.transport.sessionID);
+                });
 
-            if (session === app.transport.sessionID) {
-                switch (res.type) {
-                    case 'PLAYER' :
-                        app.game.addParticipant(session, res.turn, true);
-                        app.transition('playing');
-                        break;
-                    default :
-                        app.transition('spectating');
-                        break;
-                }
-            } else if (res.type === 'PLAYER') {
-                app.game.addParticipant(session, res.turn); 
+                app.transition('playing');
             }
         }
 
@@ -42,8 +36,7 @@ function JoinScene(app, container) {
             app.game.remove()
         }
 
-        playerSub = app.transport.subscribe('?sessions/.*', JSON.parse, playerReady);
-        playerSub.on('unsubscribed', playerLeft);
+        playerSub = app.transport.subscribe('state', JSON.parse, stateHandle);
         done();
 
         // Put this here so we're guaranteed that the scene transition
@@ -54,8 +47,7 @@ function JoinScene(app, container) {
     };
 
     this.leave = function(done) {
-        playerSub.off('update', handler);
-
+        playerSub.off('update', stateHandle);
         done();
     };
 }

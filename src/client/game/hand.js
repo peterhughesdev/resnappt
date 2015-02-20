@@ -12,7 +12,7 @@ function Hand(game, x, y) {
     }
 
     function reposition(card, i) {
-        card.sprite.position.x = x + (i * 105);
+        card.sprite.position.x = x + (i * 135);
         card.sprite.position.y = y;
     }
 

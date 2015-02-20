@@ -14,21 +14,22 @@ function mousemove(e, app, ctx, data) {
             // TODO: Update card topic
         } else {
             var entities = app.renderer.getEntitiesForPos(data);
-            var game = app.game;
 
-            if (entities.length && game.getState() === 'playing') {
-                var entity = entities[entities.length - 1];
+            if (entities.length && app.game.getState() === 'playing' && app.game.player.isActive()) {
+                for (var i = entities.length - 1; i >= 0; --i) {
+                    var entity = entities[entities.length - 1];
 
-                if (entity.type.id === Entity.Types.Card && game.player.hand.has(entity.props.index)) {
-                    if (highlighted) {
-                        highlighted.sprite.tint = 0xFFFFFF;
+                    if (entity.type.id === Entity.Types.Card && app.game.player.hand.has(entity.props.index)) {
+                        if (highlighted) {
+                            highlighted.sprite.tint = 0xFFFFFF;
+                        }
+
+                        highlighted = entities[entities.length - 1]; 
                     }
 
-                    highlighted = entities[entities.length - 1]; 
-                }
-
-                if (highlighted) {
-                    highlighted.sprite.tint = 0xFFFF00;
+                    if (highlighted) {
+                        highlighted.sprite.tint = 0xFFFF00;
+                    }
                 }
             } else {
                 if (highlighted) {
