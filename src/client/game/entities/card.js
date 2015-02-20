@@ -29,52 +29,52 @@ var Card = Entity.type('Card', {
 });
 
 
-function CardFactory(x, y, index, name, desc, rune, score, duration) {
-    var r = Entity.createText(Rune, {
+function CardFactory(x, y, data) {
+    var rune = Entity.createText(Rune, {
         x : 80,
         y : 90,
-        text : rune
+        text : data.rune
     });
 
-    var d = Entity.createText(Rune, {
+    var duration = Entity.createText(Rune, {
         x : 110,
         y : 240,
-        text : duration
+        text : data.effect.duration
     });
 
-    var s = Entity.createText(Rune, {
+    var score = Entity.createText(Rune, {
         x : 110,
         y : -240,
-        text : score
+        text : data.value
     });
 
-    var n = Entity.createText(Name, {
+    var name = Entity.createText(Name, {
         x : -40,
         y : -240,
-        text : name 
+        text : data.name 
     });
 
-    var de = Entity.createText(Desc, {
+    var desc = Entity.createText(Desc, {
         x : -20,
         y : 180,
-        text : desc
+        text : "" 
     });
 
-    var texture = '/images/cards/' + name.toLowerCase() + '.png';
+    var texture = '/images/cards/' + data.name.toLowerCase() + '.png';
 
     var card = Entity.create(Card, {
         x : x,
         y : y,
-        index : index,
-        rune : rune,
-        score : score,
+        index : data.index,
+        rune : data.rune,
+        score : data.score,
         texture : texture
     });
 
-    card.sprite.addChild(d.sprite);
-    card.sprite.addChild(n.sprite);
-    card.sprite.addChild(r.sprite);
-    card.sprite.addChild(s.sprite);
+    card.sprite.addChild(duration.sprite);
+    card.sprite.addChild(name.sprite);
+    card.sprite.addChild(rune.sprite);
+    card.sprite.addChild(score.sprite);
 
     return card;
 };

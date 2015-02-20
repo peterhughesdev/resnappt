@@ -34,6 +34,26 @@ function GameScene(app, container) {
     var scorePileSub;
     var effectPileSub;
 
+    // Player GUIs
+    var participantPosition = [
+        { x : 200, y : 200 },
+        { x : 1800, y : 200 },
+        { x : 200, y : 1200 },
+        { x : 1800, y : 1200 }
+    ];
+
+    app.game.on('playing', function() {
+        game.getParticipants().forEach(function(participant, i) {
+            var pos = participantPosition[i];
+
+            container.add(participant.createGUI(pos));
+        });
+    });
+
+    app.game.on('finished', function() {
+        app.transition('finished');
+    });
+
     this.enter = function(done) {
         // Setup board
         effectPiles.forEach(container.add);
@@ -47,7 +67,7 @@ function GameScene(app, container) {
 
         scorePileSub = app.transport.subscribe('pile/score', JSON.parse).on('update', updateScorePile);
         effectPileSub = app.transport.subscribe('pile/effects', JSON.parse).on('update', updateEffectPile);
-
+        
         app.game.start();
 
         done();

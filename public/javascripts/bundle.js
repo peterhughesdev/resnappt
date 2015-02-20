@@ -146,52 +146,52 @@ var Card = Entity.type('Card', {
 });
 
 
-function CardFactory(x, y, index, name, desc, rune, score, duration) {
-    var r = Entity.createText(Rune, {
+function CardFactory(x, y, data) {
+    var rune = Entity.createText(Rune, {
         x : 80,
         y : 90,
-        text : rune
+        text : data.rune
     });
 
-    var d = Entity.createText(Rune, {
+    var duration = Entity.createText(Rune, {
         x : 110,
         y : 240,
-        text : duration
+        text : data.effect.duration
     });
 
-    var s = Entity.createText(Rune, {
+    var score = Entity.createText(Rune, {
         x : 110,
         y : -240,
-        text : score
+        text : data.value
     });
 
-    var n = Entity.createText(Name, {
+    var name = Entity.createText(Name, {
         x : -40,
         y : -240,
-        text : name 
+        text : data.name 
     });
 
-    var de = Entity.createText(Desc, {
+    var desc = Entity.createText(Desc, {
         x : -20,
         y : 180,
-        text : desc
+        text : "" 
     });
 
-    var texture = '/images/cards/' + name.toLowerCase() + '.png';
+    var texture = '/images/cards/' + data.name.toLowerCase() + '.png';
 
     var card = Entity.create(Card, {
         x : x,
         y : y,
-        index : index,
-        rune : rune,
-        score : score,
+        index : data.index,
+        rune : data.rune,
+        score : data.score,
         texture : texture
     });
 
-    card.sprite.addChild(d.sprite);
-    card.sprite.addChild(n.sprite);
-    card.sprite.addChild(r.sprite);
-    card.sprite.addChild(s.sprite);
+    card.sprite.addChild(duration.sprite);
+    card.sprite.addChild(name.sprite);
+    card.sprite.addChild(rune.sprite);
+    card.sprite.addChild(score.sprite);
 
     return card;
 };
@@ -343,56 +343,81 @@ module.exports = ScoreFactory;
 },{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/game.js":[function(require,module,exports){
 var EventEmitter = require('events').EventEmitter;
 
-var Entity = require('./entities/entity');
+
+var Participant = require('./participant');
 var Player = require('./player');
 
 var FSM = require('../util/fsm');
 
 function Game(app) {
-    EventEmitter.call(this);
+    var emitter = new EventEmitter();
 
     var fsm = FSM.create('starting', {
-        'starting' : ['playing', 'waiting'],
-        'waiting'  : ['playing', 'finished'],
-        'playing'  : ['waiting', 'finished'],
+        'starting' : ['dealing'],
+        'playing'  : ['finished'],
         'finished' : ['starting']
     });
-
-    this.player = new Player(app);
-
+    
+    var participantsBySession = {};
+    var participants = [];
+    
     var self = this;
 
-    fsm.on('change', function(oldState, newState) {        
-        console.log('Game state: ' + oldState + ' -> ' + newState);
-
-        if (newState === 'finished') {
-            app.transition('finished');
-        }           
-    });
-
-    this.start = function() {
-        // Update cards in hand
-        app.transport.player('hand', JSON.parse, function(newHand) {
-            newHand.forEach(self.player.hand.add);
-        });
-
-        // Update score display
-        //app.transport.player('score', String, score.sprite.setText.bind(score.sprite));
-
-
-        return fsm.change('starting');
+    this.on = function(e, cb) {
+        fsm.on('change', function(o, n) {
+            if (n === e) {
+                cb();
+            }
+        });      
     };
 
-    this.playing = function(index) {
-        self.player.index = index;
+    this.start = function() {
+        if (fsm.change('starting')) {
+
+            app.transport.subscribe('?sessions/.*/hand', JSON.parse, function(newHand, topic) {
+                var session = topic.split('/')[1];
+                var player = participantsBySession[session]; 
+
+                if (player) {
+                    player.setHand(newHand);        
+                }
+            });
+
+            app.transport.subscribe('turn', String, function(curr) {
+                if (fsm.change('playing')) {
+                    if (player) {
+                        player.setInactive();
+                    }
+
+                    player = participantsBySession[curr];
+
+                    if (player) {
+                        player.setActive();
+                    }
+                }
+            });
+        }
+    };
+
+    this.addParticipant = function(session, turn, isPlayer) {
+        var player = isPlayer ? new Player(app, turn) : new Participant(app, turn);
+
+        participantsBySession[session] = player;
+        participants[turn] = player;
+
+        if (isPlayer) {
+            self.player = player;
+        }
+    };
+    
+    this.getParticipants = function() {
+        return participants;
     };
 }
 
-Game.prototype = new EventEmitter();
-
 module.exports = Game;
 
-},{"../util/fsm":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/fsm.js","./entities/entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js","./player":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js","events":"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/hand.js":[function(require,module,exports){
+},{"../util/fsm":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/fsm.js","./participant":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/participant.js","./player":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js","events":"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/hand.js":[function(require,module,exports){
 var Card = require('./entities/card');
 
 function Hand(game, x, y) {
@@ -453,25 +478,19 @@ function Hand(game, x, y) {
 
 module.exports = Hand;
 
-},{"./entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js":[function(require,module,exports){
+},{"./entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/participant.js":[function(require,module,exports){
+
+},{}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js":[function(require,module,exports){
 var Hand = require('./hand');
 
 function Player(app) { 
     this.hand = new Hand(app, 700, 400);
-
-    var self = this;
 
     this.play = function(card, pile) {
         app.transport.dispatch('PLAY', {
             card : card,
             pile : pile
         }); 
-    };
-
-    this.ready = function() {
-        app.transport.dispatch('READY', {
-            sessionID : app.transport.sessionID
-        });
     };
 
     this.snap = function() {
@@ -824,6 +843,26 @@ function GameScene(app, container) {
     var scorePileSub;
     var effectPileSub;
 
+    // Player GUIs
+    var participantPosition = [
+        { x : 200, y : 200 },
+        { x : 1800, y : 200 },
+        { x : 200, y : 1200 },
+        { x : 1800, y : 1200 }
+    ];
+
+    app.game.on('playing', function() {
+        game.getParticipants().forEach(function(participant, i) {
+            var pos = participantPosition[i];
+
+            container.add(participant.createGUI(pos));
+        });
+    });
+
+    app.game.on('finished', function() {
+        app.transition('finished');
+    });
+
     this.enter = function(done) {
         // Setup board
         effectPiles.forEach(container.add);
@@ -837,7 +876,7 @@ function GameScene(app, container) {
 
         scorePileSub = app.transport.subscribe('pile/score', JSON.parse).on('update', updateScorePile);
         effectPileSub = app.transport.subscribe('pile/effects', JSON.parse).on('update', updateEffectPile);
-
+        
         app.game.start();
 
         done();
@@ -895,31 +934,46 @@ var Score = require('../entities/score');
 function JoinScene(app, container) {
     var message = Score(1024, 700, 'Joining game');
 
-    var playerSub; 
-    var handler; 
+    var playerSub;
+
+    var playerReady;
+    var playerLeft;
 
     this.enter = function(done) {
         container.add(message);
    
-        handler = function(res) {
-            switch (res.type) {
-                case 'PLAYER' :
-                    app.game.playing(res.turn);
-                    app.transition('playing');
-                    break;
-                default :
-                    app.transition('spectating');
-                    break;
+        playerReady = function(res, topic) {
+            var session = topic.split('/')[1];
+
+            if (session === app.transport.sessionID) {
+                switch (res.type) {
+                    case 'PLAYER' :
+                        app.game.addParticipant(session, res.turn, true);
+                        app.transition('playing');
+                        break;
+                    default :
+                        app.transition('spectating');
+                        break;
+                }
+            } else if (res.type === 'PLAYER') {
+                app.game.addParticipant(session, res.turn); 
             }
         }    
 
-        playerSub = app.transport.player(null, JSON.parse, handler);
-        
+        playerLeft = function(reason, topic) {
+            var session = topic.split('/')[1];
+            app.game.remove()
+        }
+
+        playerSub = app.transport.subscribe('?sessions/.*', JSON.parse, playerReady);
+        playerSub.on('unsubscribed', playerLeft);
         done();
 
-        // Put this here because so we're guaranteed that the scene transition
+        // Put this here so we're guaranteed that the scene transition
         // has completed by the time we receive the status response
-        app.game.player.ready();
+        app.transport.dispatch('READY', {
+                sessionID : app.transport.sessionID
+        });
     };
 
     this.leave = function(done) {

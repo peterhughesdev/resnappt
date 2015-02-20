@@ -1,50 +1,75 @@
 var EventEmitter = require('events').EventEmitter;
 
-var Entity = require('./entities/entity');
+
+var Participant = require('./participant');
 var Player = require('./player');
 
 var FSM = require('../util/fsm');
 
 function Game(app) {
-    EventEmitter.call(this);
+    var emitter = new EventEmitter();
 
     var fsm = FSM.create('starting', {
-        'starting' : ['playing', 'waiting'],
-        'waiting'  : ['playing', 'finished'],
-        'playing'  : ['waiting', 'finished'],
+        'starting' : ['dealing'],
+        'playing'  : ['finished'],
         'finished' : ['starting']
     });
-
-    this.player = new Player(app);
-
+    
+    var participantsBySession = {};
+    var participants = [];
+    
     var self = this;
 
-    fsm.on('change', function(oldState, newState) {        
-        console.log('Game state: ' + oldState + ' -> ' + newState);
-
-        if (newState === 'finished') {
-            app.transition('finished');
-        }           
-    });
+    this.on = function(e, cb) {
+        fsm.on('change', function(o, n) {
+            if (n === e) {
+                cb();
+            }
+        });      
+    };
 
     this.start = function() {
-        // Update cards in hand
-        app.transport.player('hand', JSON.parse, function(newHand) {
-            newHand.forEach(self.player.hand.add);
-        });
+        if (fsm.change('starting')) {
 
-        // Update score display
-        //app.transport.player('score', String, score.sprite.setText.bind(score.sprite));
+            app.transport.subscribe('?sessions/.*/hand', JSON.parse, function(newHand, topic) {
+                var session = topic.split('/')[1];
+                var player = participantsBySession[session]; 
 
+                if (player) {
+                    player.setHand(newHand);        
+                }
+            });
 
-        return fsm.change('starting');
+            app.transport.subscribe('turn', String, function(curr) {
+                if (fsm.change('playing')) {
+                    if (player) {
+                        player.setInactive();
+                    }
+
+                    player = participantsBySession[curr];
+
+                    if (player) {
+                        player.setActive();
+                    }
+                }
+            });
+        }
     };
 
-    this.playing = function(index) {
-        self.player.index = index;
+    this.addParticipant = function(session, turn, isPlayer) {
+        var player = isPlayer ? new Player(app, turn) : new Participant(app, turn);
+
+        participantsBySession[session] = player;
+        participants[turn] = player;
+
+        if (isPlayer) {
+            self.player = player;
+        }
+    };
+    
+    this.getParticipants = function() {
+        return participants;
     };
 }
-
-Game.prototype = new EventEmitter();
 
 module.exports = Game;
