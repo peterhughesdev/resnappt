@@ -12,8 +12,7 @@ function Game() {
     var emitter = new events.EventEmitter();
 
     var playing = false;
-    var turn = 0;
-    var nTurns = 0;
+    var player = null;
 
     var deck = new Deck();
     var pile = new Pile();
@@ -24,7 +23,6 @@ function Game() {
     var snapping = false;
     var snapper = null;
     var snapInterval = null;
-    var playerCanSnap = false;
 
     this.on = function(evt, callback) {
         emitter.on(evt, callback);
@@ -36,8 +34,6 @@ function Game() {
     };
 
     this.start = function() {
-        turn = 0;
-        nTurns = 0;
         deck = new Deck();
         pile = new Pile();
         state = new State();
@@ -46,15 +42,13 @@ function Game() {
         snapper = null;
         snapTimer = null;
 
-        var players = playerService.getAllPlayers();
         var nPlayers = playerService.getNPlayers();
         deck.generateDeck(balance.numberOfCards(nPlayers), function(deck) {
             console.log('deck ready, with size ' + deck.remaining());
 
+            var players = playerService.getAllPlayers();
             for (var p in players) {
-                var player = players[p];
-
-                self.drawHand(player);
+                self.drawHand(players[p]);
             }
 
             pile.init(deck.drawCard());
@@ -62,7 +56,9 @@ function Game() {
 
             playing = true;
 
-            emitter.emit('updateTurn', playerService.getPlayerByIndex(turn).playerID);
+            player = playerService.getCurrentPlayer();
+            console.log(player);
+            emitter.emit('updateTurn', player.playerID);
         });
     };
 
@@ -91,12 +87,10 @@ function Game() {
             console.log('card played not in play phase');
             return;
         }
+        console.log(player);
 
-        var turnPlayer = playerService.getPlayerByIndex(turn);
-        var player = playerService.getPlayer(playerID);
-
-        if (turnPlayer.playerID !== player.playerID) {
-            console.log('Not player '+player.playerID+' turn');
+        if (player.playerID !== playerID) {
+            console.log('Not player '+playerID+' turn');
         }
 
         var card = player.playCard(c);
@@ -138,21 +132,17 @@ function Game() {
 
         emitter.emit('updatePile', pile.getTop());
 
-        player.score(pile.getState().score);
-        if (pile.getState().prevScore) {
-            var previousIndex = turn - 1;
-            if (previousIndex < 0) {
-                previousIndex += playerService.getNPlayers();
-            }
-            playerService.getPlayerByIndex(previousIndex).score(pile.getState().score);
+        player.addScore(pile.getState().score);
+        if (pile.getState().duplication) {
+            playerService.getPreviousPlayer().addScore(pile.getState().score);
         }
-        if (pile.getState().newCard && deck.remaining() > 0) {
+        if (pile.getState().riposte && deck.remaining() > 0) {
             // immediately draw a new card upon Riposte.
             pile.play(deck.drawCard(), false);
             emitter.emit('updatePile', pile.getTop());
         }
         if (finalRound) {
-            player.active = false;
+            player.finished();
             if(allPlayersFinished()){
                 state.endGame();
                 console.log('Game Finished');
@@ -165,7 +155,7 @@ function Game() {
 
         state.startSnap();
         // start snap timer
-        if (pile.getState().snap) {
+        if (!pile.getState().guard) {
             snapping = true;
             snapper = null;
             snapTimer = 5;
@@ -185,15 +175,13 @@ function Game() {
     };
 
     this.snap = function(playerID) {
-        if (!state.isSnapPhase() ||
-            (!pile.getState().newCard && playerService.getPlayerByIndex(turn).playerID === playerID)) {
-            return;
+        if (state.isSnapPhase() && playerService.getPlayer(playerID).canSnap()) {
+            snapping = false;
+            snapper = playerID;
+            clearInterval(snapInterval);
+            snapScoring();
+            emitter.emit('playerSnapped', playerID);
         }
-        snapping = false;
-        snapper = playerID;
-        clearInterval(snapInterval);
-        snapScoring();
-        emitter.emit('playerSnapped', playerID);
     };
 
     var snapScoring = function () {
@@ -202,9 +190,9 @@ function Game() {
             if (winner) {
                 var value = Math.ceil(pile.getState().played.value / 2.0);
                 if (pile.matchRunes()) {
-                    winner.score(value);
+                    winner.addScore(value);
                 } else {
-                    winner.score(-1*value);
+                    winner.addScore(-1*value);
                 }
             }
             state.endSnap();
@@ -214,32 +202,28 @@ function Game() {
 
     var nextTurn = function() {
         if (state.isNextTurn()) {
-            turn = (turn === playerService.getNPlayers() -1) ? turn = 0 : turn+1;
-            emitter.emit('updateTurn', playerService.getPlayerByIndex(turn).playerID);
-            nTurns++;
+            player.endTurn();
+            player = playerService.nextTurn();
+            player.setTurn(pile.getState());
+            emitter.emit('updateTurn', player.playerID);
 
-            self.drawHand(playerService.getPlayerByIndex(turn));
+            self.drawHand(player);
         }
         if (deck.remaining() === 0) {
-            playerService.getPlayerByIndex(turn).finished();
             self.finalRound();
             console.log('final round');
         }
         state.nextTurn();
     };
 
-    this.drawHand = function(player) {
-        var cards = Object.keys(player.getHand());
-        var handSize = cards.length;
+    this.drawHand = function(p) {
+        var handSize = p.getHand().length;
 
         for (var i=handSize; i<balance.MAX_HAND; i++) {
-            var card = deck.drawCard();
-            if (card) {
-                player.addCard(card);
-                emitter.emit('updateHand', player);
-                emitter.emit('updateDeck', deck.remaining());
-            }
-        };
+            p.drawCard(deck);
+        }
+        emitter.emit('updateHand', p);
+        emitter.emit('updateDeck', deck.remaining());
     };
 };
 

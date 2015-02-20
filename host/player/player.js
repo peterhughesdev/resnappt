@@ -10,6 +10,8 @@ function Player(id, turn) {
 
     var ready = false;
 
+    var canSnap = true;
+
     this.playerID = id;
     this.turn = turn;
 
@@ -23,18 +25,39 @@ function Player(id, turn) {
         return card[0];
     };
 
-    this.active = false;
     this.finished = false;
 
     this.addCard = function(card) {
         hand[hand.length] = card;
     };
 
+    this.drawCard = function(deck) {
+        var card = deck.drawCard();
+        if (card) {
+            self.addCard(card);
+        }
+    };
+
     this.getHand = function() {
         return hand;
     };
 
-    this.score = function(value) {
+    this.setTurn = function(state) {
+        canSnap = false;
+        if (state.riposte) {
+            canSnap = true;
+        }
+    };
+
+    this.canSnap = function() {
+        return canSnap;
+    };
+
+    this.endTurn = function() {
+        canSnap = true;
+    };
+
+    this.addScore = function(value) {
         score += value;
         emitter.emit('score', self);
     };
@@ -45,13 +68,10 @@ function Player(id, turn) {
 
     this.ready = function() {
         ready = true;
-        self.active = true;
-        self.finished = true;
         emitter.emit('ready', self.playerID);
     };
 
     this.finished = function() {
-        self.active = false;
         ready = false;
     };
 

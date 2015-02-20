@@ -2,7 +2,7 @@ var types = [
     {
         name : 'Guard',
         func : function(state) {
-            state.snap = false;
+            state.guard = true;
             return state;
         },
         duration : 3
@@ -52,7 +52,7 @@ var types = [
     {
         name : 'Riposte',
         func : function(state) {
-            state.newCard = true;
+            state.riposte = true;
             return state;
         },
         duration : 4
@@ -61,7 +61,7 @@ var types = [
         name : 'Duplication',
         duration : 1,
         func : function(state) {
-            state.prevScore = true;
+            state.duplication = true;
             return state;
         },
         delay : true

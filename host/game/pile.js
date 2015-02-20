@@ -50,15 +50,14 @@ function Pile() {
         state = {
             top : top,
             played : card,
-            newCard : false,
-            prevScore : false,
-            snap : true
+            riposte : false,
+            duplication : false,
+            guard : false
         };
 
         state.top.modrune = state.top.rune;
         state.played.modrune = state.played.rune;
         state.played.modvalue = state.played.value;
-        state.snap = true;
 
         for (var e in effects) {
             effects[e].execute(state, reduce);

@@ -2,8 +2,10 @@ var Player = require('../player/player');
 
 var players = [];
 
-exports.createPlayer = function(sessionID) {
-    var player = new Player(sessionID);
+var turn = 0;
+
+exports.createPlayer = function(sessionID, turnIndex) {
+    var player = new Player(sessionID, turnIndex);
 
     if (!getPlayer(sessionID)) {
         players[players.length] = player;
@@ -32,6 +34,21 @@ exports.getPlayerByIndex = function(i) {
     return players[i];
 };
 
+exports.getCurrentPlayer = function() {
+    return players[turn];
+};
+
+exports.getPreviousPlayer = function() {
+    var prev = (turn === 0) ? players.length : turn - 1;
+    return players[prev];
+};
+
+exports.nextTurn = function() {
+    var nPlayers = players.length;
+    turn = (turn === nPlayers - 1) ? 0 : turn + 1;
+    return players[turn];
+};
+
 exports.removePlayer = function(sessionID) {
     console.log('Removing player '+sessionID);
     for (var p in players) {
@@ -46,6 +63,7 @@ exports.removeAllPlayers = function() {
         delete players[p];
     }
     players = [];
+    turn = 0;
 };
 
 exports.getAllPlayers = function() {
