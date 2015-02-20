@@ -57,7 +57,6 @@ function Game() {
             playing = true;
 
             player = playerService.getCurrentPlayer();
-            console.log(player);
             emitter.emit('updateTurn', player.playerID);
         });
     };
