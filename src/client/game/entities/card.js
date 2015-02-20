@@ -51,7 +51,7 @@ function CardFactory(x, y, data) {
     var name = Entity.createText(Name, {
         x : -40,
         y : -240,
-        text : data.name 
+        text : data.effect.name 
     });
 
     var desc = Entity.createText(Desc, {

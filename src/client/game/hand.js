@@ -21,6 +21,7 @@ function Hand(game, x, y) {
     }
 
     this.add = function(data) {
+        console.log(data);
         if (cardByIndex[data.index] === undefined) {
             create(data);
             

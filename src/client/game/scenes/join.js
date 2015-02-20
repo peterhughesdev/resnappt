@@ -46,8 +46,8 @@ function JoinScene(app, container) {
     };
 
     this.leave = function(done) {
-        playerSub.off('update', handler);
-
+        playerSub.off('update', playerReady);
+        playerSub.off('unsubscribed', playerLeft);
         done();
     };
 }

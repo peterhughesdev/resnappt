@@ -1,7 +1,5 @@
 var EventEmitter = require('events').EventEmitter;
 
-
-var Participant = require('./participant');
 var Player = require('./player');
 
 var FSM = require('../util/fsm');
@@ -10,14 +8,16 @@ function Game(app) {
     var emitter = new EventEmitter();
 
     var fsm = FSM.create('starting', {
-        'starting' : ['dealing'],
-        'playing'  : ['finished'],
+        'starting' : ['playing'],
+        'playing'  : ['snapping'],
+        'snapping' : ['playing'],
         'finished' : ['starting']
     });
     
     var participantsBySession = {};
     var participants = [];
-    
+    var player;
+
     var self = this;
 
     this.on = function(e, cb) {
@@ -28,18 +28,12 @@ function Game(app) {
         });      
     };
 
+    this.getState = function() {
+        return fsm.state;
+    };
+
     this.start = function() {
         if (fsm.change('starting')) {
-
-            app.transport.subscribe('?sessions/.*/hand', JSON.parse, function(newHand, topic) {
-                var session = topic.split('/')[1];
-                var player = participantsBySession[session]; 
-
-                if (player) {
-                    player.setHand(newHand);        
-                }
-            });
-
             app.transport.subscribe('turn', String, function(curr) {
                 if (fsm.change('playing')) {
                     if (player) {
@@ -53,11 +47,33 @@ function Game(app) {
                     }
                 }
             });
+
+            app.transport.subscribe('snap/timer', Number, function(timer) {
+                if (timer === 5) {
+                    if (fsm.change('snapping')) {
+                        participants.forEach(function(p) {
+                            if (p === player) {
+                                p.setInactive();
+                            } else {
+                                p.setActive();
+                            }
+                        })  
+                    }
+                }
+
+                if (timer === 0) {
+                    participants.forEach(function(p) {
+                        p.setInactive();
+                    });
+
+                    fsm.change('playing');
+                }
+            });
         }
     };
 
     this.addParticipant = function(session, turn, isPlayer) {
-        var player = isPlayer ? new Player(app, turn) : new Participant(app, turn);
+        var player = new Player(app, session, turn);
 
         participantsBySession[session] = player;
         participants[turn] = player;

@@ -14,12 +14,11 @@ function mousemove(e, app, ctx, data) {
             // TODO: Update card topic
         } else {
             var entities = app.renderer.getEntitiesForPos(data);
-            var game = app.game;
 
-            if (entities.length && game.getState() === 'playing') {
+            if (entities.length && app.game.getState() === 'playing' && app.game.player.isActive()) {
                 var entity = entities[entities.length - 1];
 
-                if (entity.type.id === Entity.Types.Card && game.player.hand.has(entity.props.index)) {
+                if (entity.type.id === Entity.Types.Card && app.game.player.hand.has(entity.props.index)) {
                     if (highlighted) {
                         highlighted.sprite.tint = 0xFFFFFF;
                     }

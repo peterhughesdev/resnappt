@@ -168,7 +168,7 @@ function CardFactory(x, y, data) {
     var name = Entity.createText(Name, {
         x : -40,
         y : -240,
-        text : data.name 
+        text : data.effect.name 
     });
 
     var desc = Entity.createText(Desc, {
@@ -302,7 +302,31 @@ Entity.createText = function(type, properties) {
 
 module.exports = Entity;
 
-},{"../../util/coords":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/coords.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score-pile.js":[function(require,module,exports){
+},{"../../util/coords":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/coords.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/player-gui.js":[function(require,module,exports){
+var Entity = require('./entity');
+
+var GUI = Entity.type('PlayerGUI', {
+    width : 400,
+    height : 200,
+    texture : '/images/effect-placement.png'
+});
+
+function GUIFactory(x, y, name, score, icon) {
+    var gui = Entity.create(GUI, {
+        x : x,
+        y : y
+    });
+
+    gui.sprite.addChild(name.sprite);
+    gui.sprite.addChild(score.sprite);
+    gui.sprite.addChild(icon.sprite);
+
+    return gui;
+}  
+
+module.exports = GUIFactory;
+
+},{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score-pile.js":[function(require,module,exports){
 var Entity = require('./entity');
 
 var ScorePile = Entity.type('ScorePile', {
@@ -343,8 +367,6 @@ module.exports = ScoreFactory;
 },{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/game.js":[function(require,module,exports){
 var EventEmitter = require('events').EventEmitter;
 
-
-var Participant = require('./participant');
 var Player = require('./player');
 
 var FSM = require('../util/fsm');
@@ -353,14 +375,16 @@ function Game(app) {
     var emitter = new EventEmitter();
 
     var fsm = FSM.create('starting', {
-        'starting' : ['dealing'],
-        'playing'  : ['finished'],
+        'starting' : ['playing'],
+        'playing'  : ['snapping'],
+        'snapping' : ['playing'],
         'finished' : ['starting']
     });
     
     var participantsBySession = {};
     var participants = [];
-    
+    var player;
+
     var self = this;
 
     this.on = function(e, cb) {
@@ -371,18 +395,12 @@ function Game(app) {
         });      
     };
 
+    this.getState = function() {
+        return fsm.state;
+    };
+
     this.start = function() {
         if (fsm.change('starting')) {
-
-            app.transport.subscribe('?sessions/.*/hand', JSON.parse, function(newHand, topic) {
-                var session = topic.split('/')[1];
-                var player = participantsBySession[session]; 
-
-                if (player) {
-                    player.setHand(newHand);        
-                }
-            });
-
             app.transport.subscribe('turn', String, function(curr) {
                 if (fsm.change('playing')) {
                     if (player) {
@@ -396,11 +414,33 @@ function Game(app) {
                     }
                 }
             });
+
+            app.transport.subscribe('snap/timer', Number, function(timer) {
+                if (timer === 5) {
+                    if (fsm.change('snapping')) {
+                        participants.forEach(function(p) {
+                            if (p === player) {
+                                p.setInactive();
+                            } else {
+                                p.setActive();
+                            }
+                        })  
+                    }
+                }
+
+                if (timer === 0) {
+                    participants.forEach(function(p) {
+                        p.setInactive();
+                    });
+
+                    fsm.change('playing');
+                }
+            });
         }
     };
 
     this.addParticipant = function(session, turn, isPlayer) {
-        var player = isPlayer ? new Player(app, turn) : new Participant(app, turn);
+        var player = new Player(app, session, turn);
 
         participantsBySession[session] = player;
         participants[turn] = player;
@@ -417,7 +457,7 @@ function Game(app) {
 
 module.exports = Game;
 
-},{"../util/fsm":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/fsm.js","./participant":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/participant.js","./player":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js","events":"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/hand.js":[function(require,module,exports){
+},{"../util/fsm":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/fsm.js","./player":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js","events":"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/hand.js":[function(require,module,exports){
 var Card = require('./entities/card');
 
 function Hand(game, x, y) {
@@ -441,6 +481,7 @@ function Hand(game, x, y) {
     }
 
     this.add = function(data) {
+        console.log(data);
         if (cardByIndex[data.index] === undefined) {
             create(data);
             
@@ -478,13 +519,43 @@ function Hand(game, x, y) {
 
 module.exports = Hand;
 
-},{"./entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/participant.js":[function(require,module,exports){
+},{"./entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js":[function(require,module,exports){
+var PlayerGUI = require('./entities/player-gui');
+var Score = require('./entities/score');
 
-},{}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js":[function(require,module,exports){
 var Hand = require('./hand');
 
-function Player(app) { 
-    this.hand = new Hand(app, 700, 400);
+// Player GUIs
+var playerPosition = [
+    { x : 200, y : 200 },
+    { x : 1800, y : 200 },
+    { x : 200, y : 1200 },
+    { x : 1800, y : 1200 }
+];
+
+function Player(app, session, turn) { 
+    var pos = playerPosition[turn];
+
+    var score = Score(0, 80, '0');
+    var name = Score(0, 80, session);
+    var icon = Score(200, 0, 'Playing');
+
+    var gui = PlayerGUI(pos.x, pos.y, name, score, icon);
+
+    var hand = new Hand(app, pos.x + 20, pos.y + 20);
+
+    var topic = 'sessions/' + session + '/';
+    var active = false;
+
+    this.hand = hand;
+
+    app.transport.subscribe(topic + 'score', String, function(t) {
+        score.sprite.setText(t);    
+    });
+
+    app.transport.subscribe(topic + 'hand', JSON.parse, function(newHand) {
+        newHand.forEach(hand.add);
+    });
 
     this.play = function(card, pile) {
         app.transport.dispatch('PLAY', {
@@ -496,11 +567,33 @@ function Player(app) {
     this.snap = function() {
         app.transport.dispatch('SNAP', {});
     };
+
+    this.remove = function() {
+     
+    };
+
+    this.setActive = function() {
+        icon.sprite.alpha = 1;
+        active = true;
+    };
+
+    this.setInactive = function() {
+        icon.sprite.alpha = 0;
+        active = false;
+    };
+
+    this.isActive = function() {
+        return active;
+    };
+
+    this.getGUI = function() {
+        return gui;
+    };
 }
 
 module.exports = Player;
 
-},{"./hand":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/hand.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/renderer.js":[function(require,module,exports){
+},{"./entities/player-gui":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/player-gui.js","./entities/score":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score.js","./hand":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/hand.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/renderer.js":[function(require,module,exports){
 var coords = require('../util/coords');
 var curry = require('../util/curry');
 
@@ -843,19 +936,9 @@ function GameScene(app, container) {
     var scorePileSub;
     var effectPileSub;
 
-    // Player GUIs
-    var participantPosition = [
-        { x : 200, y : 200 },
-        { x : 1800, y : 200 },
-        { x : 200, y : 1200 },
-        { x : 1800, y : 1200 }
-    ];
-
     app.game.on('playing', function() {
         game.getParticipants().forEach(function(participant, i) {
-            var pos = participantPosition[i];
-
-            container.add(participant.createGUI(pos));
+            container.add(participant.getGUI());
         });
     });
 
@@ -909,7 +992,7 @@ function GameScene(app, container) {
             container.remove(scoreCard);
         }
 
-        scoreCard = createCard(scoreCardPos.x, scoreCardPos.y, newScoreCard);
+        scoreCard = Card(scoreCardPos.x, scoreCardPos.y, newScoreCard);
         container.add(scoreCard);
     }
 
@@ -977,8 +1060,8 @@ function JoinScene(app, container) {
     };
 
     this.leave = function(done) {
-        playerSub.off('update', handler);
-
+        playerSub.off('update', playerReady);
+        playerSub.off('unsubscribed', playerLeft);
         done();
     };
 }
@@ -1185,12 +1268,11 @@ function mousemove(e, app, ctx, data) {
             // TODO: Update card topic
         } else {
             var entities = app.renderer.getEntitiesForPos(data);
-            var game = app.game;
 
-            if (entities.length && game.getState() === 'playing') {
+            if (entities.length && app.game.getState() === 'playing' && app.game.player.isActive()) {
                 var entity = entities[entities.length - 1];
 
-                if (entity.type.id === Entity.Types.Card && game.player.hand.has(entity.props.index)) {
+                if (entity.type.id === Entity.Types.Card && app.game.player.hand.has(entity.props.index)) {
                     if (highlighted) {
                         highlighted.sprite.tint = 0xFFFFFF;
                     }

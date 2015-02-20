@@ -34,19 +34,9 @@ function GameScene(app, container) {
     var scorePileSub;
     var effectPileSub;
 
-    // Player GUIs
-    var participantPosition = [
-        { x : 200, y : 200 },
-        { x : 1800, y : 200 },
-        { x : 200, y : 1200 },
-        { x : 1800, y : 1200 }
-    ];
-
     app.game.on('playing', function() {
         game.getParticipants().forEach(function(participant, i) {
-            var pos = participantPosition[i];
-
-            container.add(participant.createGUI(pos));
+            container.add(participant.getGUI());
         });
     });
 
@@ -100,7 +90,7 @@ function GameScene(app, container) {
             container.remove(scoreCard);
         }
 
-        scoreCard = createCard(scoreCardPos.x, scoreCardPos.y, newScoreCard);
+        scoreCard = Card(scoreCardPos.x, scoreCardPos.y, newScoreCard);
         container.add(scoreCard);
     }
 
