@@ -74,6 +74,21 @@ function Transport(options) {
         return session.unsubscribe(topic);
     };
 
+    this.updateCardTopic = function(index, x, y) {
+        var cardTopic = sessionTopic + '/hand/' + index;
+        session.topics.update(cardTopic + '/x', x);
+        session.topics.update(cardTopic + '/y', y);
+    };
+
+    this.addCardTopic = function(index, cb) {
+        var cardTopic = sessionTopic + '/hand/' + index;
+        session.topics.add(cardTopic + '/x', 0).on('complete', function() {
+            session.topics.add(cardTopic + '/y', 0).on('complete', function() {
+               cb();
+            });
+        });
+    };
+
     this.establishCommandTopic = function(callback) {
         sessionTopic = 'sessions/' + session.sessionID;
         commandTopic = sessionTopic + '/command';
@@ -240,6 +255,7 @@ function CardFactory(x, y, data) {
     var card = Entity.create(Card, {
         x : x,
         y : y,
+        fading : true,
         index : data.index,
         rune : data.rune,
         score : data.score,
@@ -538,15 +554,27 @@ module.exports = Game;
 },{"../util/fsm":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/fsm.js","./player":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js","events":"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/hand.js":[function(require,module,exports){
 var Card = require('./entities/card');
 
-function Hand(game, x, y) {
+function Hand(game, topic, isPlayer, x, y) {
     var cards = [];
     var cardByIndex = {};
 
     function create(data) {
         var card = Card(x, y, data);
-        
-        game.renderer.add(card);
-        cards.push(card); 
+       
+        if (isPlayer) {
+            game.transport.addCardTopic(data.index, function() {
+                game.renderer.add(card);
+                cards.push(card); 
+            });
+        } else {
+            game.transport.subscribe(topic + '/' + data.index + '/x', Number, function(x) {
+                card.sprite.position.x = x;
+            });
+
+            game.transport.subscribe(topic + '/' + data.index + '/y', Number, function(y) {
+                card.sprite.position.y = y;
+            });
+        }
     }
 
     function reposition(card, i) {
@@ -610,7 +638,7 @@ var playerPosition = [
     { x : 1800, y : 1200 }
 ];
 
-function Player(app, session, turn) { 
+function Player(app, session, turn, isPlayer) { 
     var pos = playerPosition[turn];
 
     var score = Text(0, 80, '0');
@@ -619,11 +647,11 @@ function Player(app, session, turn) {
 
     var gui = PlayerGUI(pos.x, pos.y, name, score, icon);
 
-    var hand = new Hand(app, pos.x, pos.y);
 
     var topic = 'sessions/' + session + '/';
     var active = false;
 
+    var hand = new Hand(app, topic, isPlayer, pos.x, pos.y);
     this.hand = hand;
 
     app.transport.subscribe(topic + 'score', String, function(t) {
@@ -1280,6 +1308,18 @@ var t = 0;
 function animate(app, ctx, dt) {
     var entities = app.renderer.getEntities();
 
+    entities.filter(function(e) { 
+        return e.type.id === Entity.Types.Card;
+    }).forEach(function(card) {
+        if (card.props.fading) {
+            card.sprite.alpha++;
+        }
+
+        if (card.sprite.alpha >= 1) {
+            card.props.fading = false;
+        }
+    });
+
     if (app.getState() === 'connected') {
         var title = entities.filter(function(e) {
             return e.type.id === Entity.Types.Title;
@@ -1418,6 +1458,7 @@ function mousemove(e, app, ctx, data) {
             currentCard.sprite.position.y = pos.y;
 
             // TODO: Update card topic
+            app.transport.updateCardTopic(currentCard.properties.index, pos.x, pos.y);            
         } else {
             var entities = app.renderer.getEntitiesForPos(data);
 

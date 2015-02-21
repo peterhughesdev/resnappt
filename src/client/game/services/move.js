@@ -12,6 +12,7 @@ function mousemove(e, app, ctx, data) {
             currentCard.sprite.position.y = pos.y;
 
             // TODO: Update card topic
+            app.transport.updateCardTopic(currentCard.properties.index, pos.x, pos.y);            
         } else {
             var entities = app.renderer.getEntitiesForPos(data);
 

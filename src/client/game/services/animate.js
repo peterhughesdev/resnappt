@@ -5,6 +5,18 @@ var t = 0;
 function animate(app, ctx, dt) {
     var entities = app.renderer.getEntities();
 
+    entities.filter(function(e) { 
+        return e.type.id === Entity.Types.Card;
+    }).forEach(function(card) {
+        if (card.props.fading) {
+            card.sprite.alpha++;
+        }
+
+        if (card.sprite.alpha >= 1) {
+            card.props.fading = false;
+        }
+    });
+
     if (app.getState() === 'connected') {
         var title = entities.filter(function(e) {
             return e.type.id === Entity.Types.Title;

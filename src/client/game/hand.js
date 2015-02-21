@@ -1,14 +1,26 @@
 var Card = require('./entities/card');
 
-function Hand(game, x, y) {
+function Hand(game, topic, isPlayer, x, y) {
     var cards = [];
     var cardByIndex = {};
 
     function create(data) {
         var card = Card(x, y, data);
-        
-        game.renderer.add(card);
-        cards.push(card); 
+       
+        if (isPlayer) {
+            game.transport.addCardTopic(data.index, function() {
+                game.renderer.add(card);
+                cards.push(card); 
+            });
+        } else {
+            game.transport.subscribe(topic + '/' + data.index + '/x', Number, function(x) {
+                card.sprite.position.x = x;
+            });
+
+            game.transport.subscribe(topic + '/' + data.index + '/y', Number, function(y) {
+                card.sprite.position.y = y;
+            });
+        }
     }
 
     function reposition(card, i) {

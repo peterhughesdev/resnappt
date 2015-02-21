@@ -57,6 +57,21 @@ function Transport(options) {
         return session.unsubscribe(topic);
     };
 
+    this.updateCardTopic = function(index, x, y) {
+        var cardTopic = sessionTopic + '/hand/' + index;
+        session.topics.update(cardTopic + '/x', x);
+        session.topics.update(cardTopic + '/y', y);
+    };
+
+    this.addCardTopic = function(index, cb) {
+        var cardTopic = sessionTopic + '/hand/' + index;
+        session.topics.add(cardTopic + '/x', 0).on('complete', function() {
+            session.topics.add(cardTopic + '/y', 0).on('complete', function() {
+               cb();
+            });
+        });
+    };
+
     this.establishCommandTopic = function(callback) {
         sessionTopic = 'sessions/' + session.sessionID;
         commandTopic = sessionTopic + '/command';

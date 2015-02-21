@@ -81,6 +81,7 @@ function CardFactory(x, y, data) {
     var card = Entity.create(Card, {
         x : x,
         y : y,
+        fading : true,
         index : data.index,
         rune : data.rune,
         score : data.score,

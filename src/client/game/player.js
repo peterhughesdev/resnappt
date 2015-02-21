@@ -11,7 +11,7 @@ var playerPosition = [
     { x : 1800, y : 1200 }
 ];
 
-function Player(app, session, turn) { 
+function Player(app, session, turn, isPlayer) { 
     var pos = playerPosition[turn];
 
     var score = Text(0, 80, '0');
@@ -20,11 +20,11 @@ function Player(app, session, turn) {
 
     var gui = PlayerGUI(pos.x, pos.y, name, score, icon);
 
-    var hand = new Hand(app, pos.x, pos.y);
 
     var topic = 'sessions/' + session + '/';
     var active = false;
 
+    var hand = new Hand(app, topic, isPlayer, pos.x, pos.y);
     this.hand = hand;
 
     app.transport.subscribe(topic + 'score', String, function(t) {
