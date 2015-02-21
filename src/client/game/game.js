@@ -28,9 +28,15 @@ function Game(app) {
         });      
     };
 
+    fsm.on('change', function(o, n) {
+        console.log('Game state: ' + o + ' -> ' + n);
+    });
+
     this.getState = function() {
         return fsm.state;
     };
+
+    var player;
 
     this.start = function() {
         if (fsm.change('starting')) {
@@ -75,12 +81,13 @@ function Game(app) {
     };
 
     this.addParticipant = function(session, turn, isPlayer) {
-        var player = new Player(app, session, turn);
+        var player = new Player(app, session, turn, isPlayer);
 
         participantsBySession[session] = player;
         participants[turn] = player;
 
         if (isPlayer) {
+            console.log('Adding self as player');
             self.player = player;
         }
     };

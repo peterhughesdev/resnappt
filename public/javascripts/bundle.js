@@ -76,14 +76,18 @@ function Transport(options) {
 
     this.updateCardTopic = function(index, x, y) {
         var cardTopic = sessionTopic + '/hand/' + index;
+    
         session.topics.update(cardTopic + '/x', x);
         session.topics.update(cardTopic + '/y', y);
     };
 
-    this.addCardTopic = function(index, cb) {
+    this.addCardTopic = function(index, x, y, cb) {
+        var mx = new diffusion.metadata.Decimal(x, 20);
+        var my = new diffusion.metadata.Decimal(y, 20);
+
         var cardTopic = sessionTopic + '/hand/' + index;
-        session.topics.add(cardTopic + '/x', 0).on('complete', function() {
-            session.topics.add(cardTopic + '/y', 0).on('complete', function() {
+        session.topics.add(cardTopic + '/x', mx).on('complete', function() {
+            session.topics.add(cardTopic + '/y', my).on('complete', function() {
                cb();
             });
         });
@@ -255,7 +259,6 @@ function CardFactory(x, y, data) {
     var card = Entity.create(Card, {
         x : x,
         y : y,
-        fading : true,
         index : data.index,
         rune : data.rune,
         score : data.score,
@@ -487,9 +490,15 @@ function Game(app) {
         });      
     };
 
+    fsm.on('change', function(o, n) {
+        console.log('Game state: ' + o + ' -> ' + n);
+    });
+
     this.getState = function() {
         return fsm.state;
     };
+
+    var player;
 
     this.start = function() {
         if (fsm.change('starting')) {
@@ -534,12 +543,13 @@ function Game(app) {
     };
 
     this.addParticipant = function(session, turn, isPlayer) {
-        var player = new Player(app, session, turn);
+        var player = new Player(app, session, turn, isPlayer);
 
         participantsBySession[session] = player;
         participants[turn] = player;
 
         if (isPlayer) {
+            console.log('Adding self as player');
             self.player = player;
         }
     };
@@ -558,25 +568,6 @@ function Hand(game, topic, isPlayer, x, y) {
     var cards = [];
     var cardByIndex = {};
 
-    function create(data) {
-        var card = Card(x, y, data);
-       
-        if (isPlayer) {
-            game.transport.addCardTopic(data.index, function() {
-                game.renderer.add(card);
-                cards.push(card); 
-            });
-        } else {
-            game.transport.subscribe(topic + '/' + data.index + '/x', Number, function(x) {
-                card.sprite.position.x = x;
-            });
-
-            game.transport.subscribe(topic + '/' + data.index + '/y', Number, function(y) {
-                card.sprite.position.y = y;
-            });
-        }
-    }
-
     function reposition(card, i) {
         card.sprite.position.x = x + (i * 135);
         card.sprite.position.y = y;
@@ -588,10 +579,29 @@ function Hand(game, topic, isPlayer, x, y) {
 
     this.add = function(data) {
         if (cardByIndex[data.index] === undefined) {
-            create(data);
+            var card = Card(x, y, data); 
             
+            cards.push(card); 
             cards.forEach(reposition);
             cards.forEach(reassign);
+
+            if (isPlayer) {
+                game.transport.addCardTopic(data.index, card.sprite.position.x, card.sprite.position.y, function() {
+                    game.renderer.add(card);
+                });
+            } else {
+                var cardTopic = topic + 'hand/' + data.index;
+
+                game.transport.subscribe(cardTopic + '/x', Number, function(x) {
+                    card.sprite.position.x = x;
+                });
+
+                game.transport.subscribe(cardTopic + '/y', Number, function(y) {
+                    card.sprite.position.y = y;
+                });
+
+                game.renderer.add(card);
+            }
         }
     };
 
@@ -680,11 +690,15 @@ function Player(app, session, turn, isPlayer) {
     this.setActive = function() {
         icon.sprite.alpha = 1;
         active = true;
+
+        console.log('Player (' + isPlayer + ') ' + session + ' is active');
     };
 
     this.setInactive = function() {
         icon.sprite.alpha = 0;
         active = false;
+        
+        console.log('Player (' + isPlayer + ') ' + session + ' is inactive');
     };
 
     this.isActive = function() {
@@ -1308,17 +1322,17 @@ var t = 0;
 function animate(app, ctx, dt) {
     var entities = app.renderer.getEntities();
 
-    entities.filter(function(e) { 
-        return e.type.id === Entity.Types.Card;
-    }).forEach(function(card) {
-        if (card.props.fading) {
-            card.sprite.alpha++;
-        }
+    //entities.filter(function(e) { 
+    //    return e.type.id === Entity.Types.Card;
+    //}).forEach(function(card) {
+    //    if (card.props.fading) {
+    //        card.sprite.alpha++;
+    //    }
 
-        if (card.sprite.alpha >= 1) {
-            card.props.fading = false;
-        }
-    });
+    //    if (card.sprite.alpha >= 1) {
+    //        card.props.fading = false;
+    //    }
+    //});
 
     if (app.getState() === 'connected') {
         var title = entities.filter(function(e) {
@@ -1457,27 +1471,29 @@ function mousemove(e, app, ctx, data) {
             currentCard.sprite.position.x = pos.x;
             currentCard.sprite.position.y = pos.y;
 
-            // TODO: Update card topic
-            app.transport.updateCardTopic(currentCard.properties.index, pos.x, pos.y);            
+            app.transport.updateCardTopic(currentCard.props.index, pos.x, pos.y);            
         } else {
             var entities = app.renderer.getEntitiesForPos(data);
+            var player = app.game.player;
 
-            if (entities.length && app.game.getState() === 'playing' && app.game.player.isActive()) {
+            if (entities.length && app.game.getState() === 'playing' && player && player.isActive()) {
                 for (var i = entities.length - 1; i >= 0; --i) {
-                    var entity = entities[entities.length - 1];
+                    var entity = entities[i];
 
-                    if (entity.type.id === Entity.Types.Card && app.game.player.hand.has(entity.props.index)) {
+                    if (entity.type.id === Entity.Types.Card && player.hand.has(entity.props.index)) {
                         if (highlighted) {
                             highlighted.sprite.tint = 0xFFFFFF;
                         }
 
-                        highlighted = entities[entities.length - 1]; 
-                    }
-
-                    if (highlighted) {
-                        highlighted.sprite.tint = 0xFFFF00;
+                        highlighted = entity;
+                        break;
                     }
                 }
+
+                if (highlighted) {
+                    highlighted.sprite.tint = 0xFFFF00;
+                }
+
             } else {
                 if (highlighted) {
                     highlighted.sprite.tint = 0xFFFFFF; 

@@ -53,11 +53,15 @@ function Player(app, session, turn, isPlayer) {
     this.setActive = function() {
         icon.sprite.alpha = 1;
         active = true;
+
+        console.log('Player (' + isPlayer + ') ' + session + ' is active');
     };
 
     this.setInactive = function() {
         icon.sprite.alpha = 0;
         active = false;
+        
+        console.log('Player (' + isPlayer + ') ' + session + ' is inactive');
     };
 
     this.isActive = function() {

@@ -59,14 +59,18 @@ function Transport(options) {
 
     this.updateCardTopic = function(index, x, y) {
         var cardTopic = sessionTopic + '/hand/' + index;
+    
         session.topics.update(cardTopic + '/x', x);
         session.topics.update(cardTopic + '/y', y);
     };
 
-    this.addCardTopic = function(index, cb) {
+    this.addCardTopic = function(index, x, y, cb) {
+        var mx = new diffusion.metadata.Decimal(x, 20);
+        var my = new diffusion.metadata.Decimal(y, 20);
+
         var cardTopic = sessionTopic + '/hand/' + index;
-        session.topics.add(cardTopic + '/x', 0).on('complete', function() {
-            session.topics.add(cardTopic + '/y', 0).on('complete', function() {
+        session.topics.add(cardTopic + '/x', mx).on('complete', function() {
+            session.topics.add(cardTopic + '/y', my).on('complete', function() {
                cb();
             });
         });

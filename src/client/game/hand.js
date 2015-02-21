@@ -4,25 +4,6 @@ function Hand(game, topic, isPlayer, x, y) {
     var cards = [];
     var cardByIndex = {};
 
-    function create(data) {
-        var card = Card(x, y, data);
-       
-        if (isPlayer) {
-            game.transport.addCardTopic(data.index, function() {
-                game.renderer.add(card);
-                cards.push(card); 
-            });
-        } else {
-            game.transport.subscribe(topic + '/' + data.index + '/x', Number, function(x) {
-                card.sprite.position.x = x;
-            });
-
-            game.transport.subscribe(topic + '/' + data.index + '/y', Number, function(y) {
-                card.sprite.position.y = y;
-            });
-        }
-    }
-
     function reposition(card, i) {
         card.sprite.position.x = x + (i * 135);
         card.sprite.position.y = y;
@@ -34,10 +15,29 @@ function Hand(game, topic, isPlayer, x, y) {
 
     this.add = function(data) {
         if (cardByIndex[data.index] === undefined) {
-            create(data);
+            var card = Card(x, y, data); 
             
+            cards.push(card); 
             cards.forEach(reposition);
             cards.forEach(reassign);
+
+            if (isPlayer) {
+                game.transport.addCardTopic(data.index, card.sprite.position.x, card.sprite.position.y, function() {
+                    game.renderer.add(card);
+                });
+            } else {
+                var cardTopic = topic + 'hand/' + data.index;
+
+                game.transport.subscribe(cardTopic + '/x', Number, function(x) {
+                    card.sprite.position.x = x;
+                });
+
+                game.transport.subscribe(cardTopic + '/y', Number, function(y) {
+                    card.sprite.position.y = y;
+                });
+
+                game.renderer.add(card);
+            }
         }
     };
 
