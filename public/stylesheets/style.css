@@ -1,6 +1,7 @@
 @font-face {
   font-family: 'LibianRunic';
   src: url('/fonts/LibianRunic.ttf');
+  unicode-range: U+00-FFFF;
 }
 
 body {

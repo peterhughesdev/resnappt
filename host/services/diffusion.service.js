@@ -44,7 +44,6 @@ var connected = function() {
     .on('unsubscribed', playerUnsubscribed);
 
     session.subscribe('?sessions/.*/command')
-    .transform(JSON.parse)
     .on('update', playerCommand);
 
     createTopicTree();
@@ -75,8 +74,11 @@ var playerUnsubscribed = function(reason, topic) {
 };
 
 var playerCommand = function(message, topic) {
-    var sessionID = topic.split('/')[1];
-    emitter.emit('playerCommand', sessionID, message);
+    if (message.length) {
+        message = JSON.parse(message);
+        var sessionID = topic.split('/')[1];
+        emitter.emit('playerCommand', sessionID, message);
+    }
 };
 
 var createTopicTree = function() {
@@ -84,22 +86,35 @@ var createTopicTree = function() {
         // add topics that we need here
         var topics = session.topics;
 
-        topics.add('turn').on('complete', function() {
+        topics.add('turn', '{}').on('complete', function() {
             topics.removeWithSession('turn').on('complete', function() {
                 console.log('added turn topic');
             });
         });
-        topics.add('deck').on('complete', function() {
+        topics.add('deck', '{}').on('complete', function() {
             topics.removeWithSession('deck').on('complete', function() {
                 console.log('added deck topic');
             });
         });
-        topics.add('pile/score');
-        topics.add('pile/effects');
-        topics.add('summary');
-        topics.add('snap/winner');
-        topics.add('snap/timer');
+        topics.add('pile/score', '{}');
+        topics.add('pile/effects', '[]');
+        topics.add('summary', '{}');
+        topics.add('snap/winner', '{}');
+        topics.add('snap/timer', '{}');
+        topics.add('state', '{}').on('complete', function() {
+            publish('state', JSON.stringify({state:'NOT_PLAYING'}));
+        });
     }
+};
+
+exports.startGame = function(players) {
+    var message = { state : 'PLAYING', players : players };
+    publish('state', JSON.stringify(message));
+};
+
+exports.endGame = function() {
+    var message = { state : 'NOT_PLAYING' };
+    publish('state', JSON.stringify(message));
 };
 
 exports.registerPlayer = function(playerID, turn) {
@@ -151,5 +166,6 @@ exports.updateScore = function(player) {
 };
 
 var publish = function(topic, data) {
+    console.log(topic + ' >> ' + data);
     session.topics.update(topic, data);
 };
