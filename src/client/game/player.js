@@ -24,18 +24,14 @@ function Player(app, session, turn, isPlayer) {
     var topic = 'sessions/' + session + '/';
     var active = false;
 
-    var hand = new Hand(app, topic, isPlayer, pos.x, pos.y);
+    var hand = new Hand(app, topic, turn, isPlayer, pos.x, pos.y);
     this.hand = hand;
 
-    app.transport.subscribe(topic + 'score', String, function(t) {
-        score.sprite.setText(t);    
-    });
-
-    app.transport.subscribe(topic + 'hand', JSON.parse, function(newHand) {
-        newHand.forEach(hand.add);
-    });
+    app.transport.subscribe(topic + 'score', String, score.sprite.setText);
+    app.transport.subscribe(topic + 'hand', JSON.parse, hand.update);
 
     this.play = function(card, pile) {
+        hand.remove(card);
         app.transport.dispatch('PLAY', {
             card : card,
             pile : pile

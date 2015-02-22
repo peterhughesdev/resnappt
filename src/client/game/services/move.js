@@ -33,7 +33,6 @@ function mousemove(e, app, ctx, data) {
                 if (highlighted) {
                     highlighted.sprite.tint = 0xFFFF00;
                 }
-
             } else {
                 if (highlighted) {
                     highlighted.sprite.tint = 0xFFFFFF; 

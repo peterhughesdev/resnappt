@@ -36,6 +36,7 @@ function GameScene(app, container) {
     // Subscribe to gameplay topics
     var turnSub;
     var deckSub;
+    var snapSub;
     var scorePileSub;
     var effectPileSub;
 
@@ -62,6 +63,7 @@ function GameScene(app, container) {
 
         turnSub = app.transport.subscribe('turn', String).on('update', updateTurn);
         deckSub = app.transport.subscribe('deck', String).on('update', updateDeck);
+        snapSub = app.transport.subscribe('snap/timer', Number).on('update', updateSnap);
 
         scorePileSub = app.transport.subscribe('pile/score', JSON.parse).on('update', updateScorePile);
         effectPileSub = app.transport.subscribe('pile/effects', JSON.parse).on('update', updateEffectPile);
@@ -74,6 +76,7 @@ function GameScene(app, container) {
     this.leave = function(done) {
         turnSub.off('update', updateTurn);
         deckSub.off('update', updateDeck);
+        snapSub.off('update', updateSnap);
 
         scorePileSub.off('update', updateScorePile);
         effectPileSub.off('update', updateEffectPile);
@@ -91,6 +94,12 @@ function GameScene(app, container) {
 
     function updateDeck(size) {
         deck.sprite.setText('Deck size: ' + size); 
+    }
+
+    function updateSnap(timer) {
+        if (app.game.getState() === 'snapping') {
+            turn.sprite.setText('Snap! ' + timer);
+        }
     }
 
     function updateScorePile(newScoreCard) {

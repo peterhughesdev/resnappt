@@ -584,33 +584,63 @@ module.exports = Game;
 var Card = require('./entities/card');
 var CardBack = require('./entities/cardback');
 
-function Hand(game, topic, isPlayer, x, y) {
+function Hand(game, topic, turn, isPlayer, x, y) {
     var cards = [];
     var cardByIndex = {};
 
-    function reposition(card, i) {
-        card.sprite.position.x = x + (i * 135);
+    var offset = turn % 2 ? 35 : 0;
+
+    var self = this;
+
+    function position(card, i) {
+        card.sprite.position.x = x + (i * 135) - offset;
         card.sprite.position.y = y;
     }
 
-    function reassign(card, i) {
-        cardByIndex[card.props.index] = i;
+    function reassign(c, i) {
+        cardByIndex[c.props.index] = i;
     }
+    
+    function removed(c) {
+        return this.indexOf(c.props.index) === -1;
+    }
+
+    function getIndex(d) {
+        return d.index;
+    }
+
+    function getPropIndex(c) {
+        return c.props.index;
+    }
+
+    this.update = function(data) {
+        data.forEach(self.add);
+
+        var ids = data.map(getIndex);
+
+        cards.filter(removed, ids)
+             .map(getPropIndex)
+             .forEach(self.remove);
+    };
 
     this.add = function(data) {
         if (cardByIndex[data.index] === undefined) {
+            var i = cards.length;
             var card;
-            
-            
+
             if (isPlayer) {
                 card  = Card(x, y, data); 
 
+                position(card, i);
+                
                 game.transport.addCardTopic(data.index, card.sprite.position.x, card.sprite.position.y, function() {
                     game.renderer.add(card);
                 });
             } else {
                 card = CardBack(x, y, data);
-
+                
+                position(card, i);
+                
                 var cardTopic = topic + 'hand/' + data.index;
 
                 game.transport.subscribe(cardTopic + '/x', Number, function(x) {
@@ -623,20 +653,18 @@ function Hand(game, topic, isPlayer, x, y) {
 
                 game.renderer.add(card);
             }
+            
 
             cards.push(card); 
-            cards.forEach(reposition);
             cards.forEach(reassign);
-
         }
     };
 
     this.remove = function(index) {
         if (cardByIndex[index] !== undefined) {
-            cards.splice(cardByIndex[index], 1).forEach(game.remove);
+            cards.splice(cardByIndex[index], 1).forEach(game.renderer.remove);
             delete cardByIndex[index];
             
-            cards.forEach(reposition);
             cards.forEach(reassign);
         }
     };
@@ -687,18 +715,14 @@ function Player(app, session, turn, isPlayer) {
     var topic = 'sessions/' + session + '/';
     var active = false;
 
-    var hand = new Hand(app, topic, isPlayer, pos.x, pos.y);
+    var hand = new Hand(app, topic, turn, isPlayer, pos.x, pos.y);
     this.hand = hand;
 
-    app.transport.subscribe(topic + 'score', String, function(t) {
-        score.sprite.setText(t);    
-    });
-
-    app.transport.subscribe(topic + 'hand', JSON.parse, function(newHand) {
-        newHand.forEach(hand.add);
-    });
+    app.transport.subscribe(topic + 'score', String, score.sprite.setText);
+    app.transport.subscribe(topic + 'hand', JSON.parse, hand.update);
 
     this.play = function(card, pile) {
+        hand.remove(card);
         app.transport.dispatch('PLAY', {
             card : card,
             pile : pile
@@ -1083,6 +1107,7 @@ function GameScene(app, container) {
     // Subscribe to gameplay topics
     var turnSub;
     var deckSub;
+    var snapSub;
     var scorePileSub;
     var effectPileSub;
 
@@ -1109,6 +1134,7 @@ function GameScene(app, container) {
 
         turnSub = app.transport.subscribe('turn', String).on('update', updateTurn);
         deckSub = app.transport.subscribe('deck', String).on('update', updateDeck);
+        snapSub = app.transport.subscribe('snap/timer', Number).on('update', updateSnap);
 
         scorePileSub = app.transport.subscribe('pile/score', JSON.parse).on('update', updateScorePile);
         effectPileSub = app.transport.subscribe('pile/effects', JSON.parse).on('update', updateEffectPile);
@@ -1121,6 +1147,7 @@ function GameScene(app, container) {
     this.leave = function(done) {
         turnSub.off('update', updateTurn);
         deckSub.off('update', updateDeck);
+        snapSub.off('update', updateSnap);
 
         scorePileSub.off('update', updateScorePile);
         effectPileSub.off('update', updateEffectPile);
@@ -1138,6 +1165,12 @@ function GameScene(app, container) {
 
     function updateDeck(size) {
         deck.sprite.setText('Deck size: ' + size); 
+    }
+
+    function updateSnap(timer) {
+        if (app.game.getState() === 'snapping') {
+            turn.sprite.setText('Snap! ' + timer);
+        }
     }
 
     function updateScorePile(newScoreCard) {
@@ -1401,10 +1434,10 @@ module.exports = {
 var Entity = require('../entities/entity');
 
 function mousedown(e, app, ctx, data) {
-    if (app.getState() === 'playing') {
+    if (ctx.currentCard === undefined && app.getState() === 'playing') {
         var entities = app.renderer.getEntitiesForPos(data);
 
-        if (entities.length && !ctx.currentCard) {
+        if (entities.length) {
             var hand = app.game.player.hand;
 
             // Selecting a hand card - traverse backwards through the entities until we find a card
@@ -1432,59 +1465,59 @@ function mouseup(e, app, ctx, data) {
     var entities = app.renderer.getEntitiesForPos(data);
 
     if (entities.length) {
-        var entity = entities[entities.length - 1];
-        var bottom = entities[0];
+        var appState = app.getState();
 
-        if (app.getState() === 'playing') {
+        if (appState === 'playing') {
             var currentCard = ctx.currentCard;
+            var gameState = app.game.getState();
             var player = app.game.player;
 
-            for (var i = 0; i < entities.length; ++i) {
+            if (currentCard && gameState === 'playing') {
+                for (var i = 0; i < entities.length; ++i) {
+                    var bottom = entities[i];
 
-            var bottom = entities[i];
+                    // Adding a card to the score pile
+                    if (bottom.type.id === Entity.Types.ScorePile) {
+                        player.play(currentCard.props.index, 'SCORE')
+                        break;
+                    }
 
-            // Adding a card to the score pile
-            if (bottom.type.id === Entity.Types.ScorePile && currentCard !== undefined) {
-                player.play(currentCard.props.index, 'SCORE')
-
-                currentCard.sprite.x = bottom.sprite.x;
-                currentCard.sprite.y = bottom.sprite.y;
-                currentCard.sprite.tint = 0xFFFFFF;
-
-                player.hand.remove(currentCard.props.index);
-                break;
+                    // Adding a card to the effect pile
+                    if (bottom.type.id === Entity.Types.EffectPile && player.hand.size() > 1) {
+                        player.play(currentCard.props.index, 'EFFECT');
+                        break;
+                    }
+                }
             }
 
-            // Adding a card to the effect pile
-            if (bottom.type.id === Entity.Types.EffectPile && currentCard !== undefined && player.hand.size() > 1) {
-                player.play(currentCard.props.index, 'EFFECT');
-
-                currentCard.sprite.x = bottom.sprite.x;
-                currentCard.sprite.y = bottom.sprite.y;
-                currentCard.sprite.tint = 0xFFFFFF;
-
-                player.hand.remove(currentCard.props.index);
-                break;
-            }
-
-            // Snap the score pile 
-            if (bottom.type.id === Entity.Types.ScorePile) {
-                player.snap();
-                break;
-            }
-
+            if (gameState === 'snapping') {
+                for (var i = 0; i < entities.length; ++i) {
+                    var entity = entities[i]; 
+                    
+                    // Snap the score pile 
+                    if (entity.type.id === Entity.Types.ScorePile) {
+                        player.snap();
+                        break;
+                    }
+                }
             }
         }
 
-        if (app.getState() === 'connected') {
-            // Join the game
-            if (entity.type.id  === Entity.Types.Button) {
-                app.transition('joining');
-            }    
-       }
+        if (appState === 'connected') {
+            for (var i = 0; i < entities.length; ++i) {
+                var entity = entities[i];
 
-       ctx.currentCard = undefined;
+                // Join the game
+                if (entity.type.id  === Entity.Types.Button) {
+                    app.transition('joining');
+                    break;
+                }    
+            }
+        }
+
     }
+    
+    ctx.currentCard = undefined;
 }
 
 module.exports = {
@@ -1528,7 +1561,6 @@ function mousemove(e, app, ctx, data) {
                 if (highlighted) {
                     highlighted.sprite.tint = 0xFFFF00;
                 }
-
             } else {
                 if (highlighted) {
                     highlighted.sprite.tint = 0xFFFFFF; 
