@@ -275,6 +275,25 @@ function CardFactory(x, y, data) {
 
 module.exports = CardFactory;
 
+},{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/cardback.js":[function(require,module,exports){
+var Entity = require('./entity');
+
+var CardBack = Entity.type('CardBack', {
+    width : 133,
+    height : 200,
+    texture : '/images/cards/backface.png'
+});
+
+function CardBackFactory(x, y, data) {
+    return Entity.create(CardBack, {
+        x : x,
+        y : y,
+        index : data.index
+    });
+}
+
+module.exports = CardBackFactory;
+
 },{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/effect-pile.js":[function(require,module,exports){
 var Entity = require('./entity');
 
@@ -563,6 +582,7 @@ module.exports = Game;
 
 },{"../util/fsm":"/Users/Peter/Dev/Projects/Resnappt/src/client/util/fsm.js","./player":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js","events":"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/events/events.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/hand.js":[function(require,module,exports){
 var Card = require('./entities/card');
+var CardBack = require('./entities/cardback');
 
 function Hand(game, topic, isPlayer, x, y) {
     var cards = [];
@@ -579,17 +599,18 @@ function Hand(game, topic, isPlayer, x, y) {
 
     this.add = function(data) {
         if (cardByIndex[data.index] === undefined) {
-            var card = Card(x, y, data); 
+            var card;
             
-            cards.push(card); 
-            cards.forEach(reposition);
-            cards.forEach(reassign);
-
+            
             if (isPlayer) {
+                card  = Card(x, y, data); 
+
                 game.transport.addCardTopic(data.index, card.sprite.position.x, card.sprite.position.y, function() {
                     game.renderer.add(card);
                 });
             } else {
+                card = CardBack(x, y, data);
+
                 var cardTopic = topic + 'hand/' + data.index;
 
                 game.transport.subscribe(cardTopic + '/x', Number, function(x) {
@@ -602,6 +623,11 @@ function Hand(game, topic, isPlayer, x, y) {
 
                 game.renderer.add(card);
             }
+
+            cards.push(card); 
+            cards.forEach(reposition);
+            cards.forEach(reassign);
+
         }
     };
 
@@ -634,7 +660,7 @@ function Hand(game, topic, isPlayer, x, y) {
 
 module.exports = Hand;
 
-},{"./entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js":[function(require,module,exports){
+},{"./entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js","./entities/cardback":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/cardback.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/player.js":[function(require,module,exports){
 var PlayerGUI = require('./entities/player-gui');
 var Text = require('./entities/text');
 
@@ -1413,6 +1439,10 @@ function mouseup(e, app, ctx, data) {
             var currentCard = ctx.currentCard;
             var player = app.game.player;
 
+            for (var i = 0; i < entities.length; ++i) {
+
+            var bottom = entities[i];
+
             // Adding a card to the score pile
             if (bottom.type.id === Entity.Types.ScorePile && currentCard !== undefined) {
                 player.play(currentCard.props.index, 'SCORE')
@@ -1422,6 +1452,7 @@ function mouseup(e, app, ctx, data) {
                 currentCard.sprite.tint = 0xFFFFFF;
 
                 player.hand.remove(currentCard.props.index);
+                break;
             }
 
             // Adding a card to the effect pile
@@ -1433,11 +1464,15 @@ function mouseup(e, app, ctx, data) {
                 currentCard.sprite.tint = 0xFFFFFF;
 
                 player.hand.remove(currentCard.props.index);
+                break;
             }
 
             // Snap the score pile 
             if (bottom.type.id === Entity.Types.ScorePile) {
                 player.snap();
+                break;
+            }
+
             }
         }
 

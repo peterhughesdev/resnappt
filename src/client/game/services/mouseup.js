@@ -11,6 +11,10 @@ function mouseup(e, app, ctx, data) {
             var currentCard = ctx.currentCard;
             var player = app.game.player;
 
+            for (var i = 0; i < entities.length; ++i) {
+
+            var bottom = entities[i];
+
             // Adding a card to the score pile
             if (bottom.type.id === Entity.Types.ScorePile && currentCard !== undefined) {
                 player.play(currentCard.props.index, 'SCORE')
@@ -20,6 +24,7 @@ function mouseup(e, app, ctx, data) {
                 currentCard.sprite.tint = 0xFFFFFF;
 
                 player.hand.remove(currentCard.props.index);
+                break;
             }
 
             // Adding a card to the effect pile
@@ -31,11 +36,15 @@ function mouseup(e, app, ctx, data) {
                 currentCard.sprite.tint = 0xFFFFFF;
 
                 player.hand.remove(currentCard.props.index);
+                break;
             }
 
             // Snap the score pile 
             if (bottom.type.id === Entity.Types.ScorePile) {
                 player.snap();
+                break;
+            }
+
             }
         }
 

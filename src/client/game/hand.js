@@ -1,4 +1,5 @@
 var Card = require('./entities/card');
+var CardBack = require('./entities/cardback');
 
 function Hand(game, topic, isPlayer, x, y) {
     var cards = [];
@@ -15,17 +16,18 @@ function Hand(game, topic, isPlayer, x, y) {
 
     this.add = function(data) {
         if (cardByIndex[data.index] === undefined) {
-            var card = Card(x, y, data); 
+            var card;
             
-            cards.push(card); 
-            cards.forEach(reposition);
-            cards.forEach(reassign);
-
+            
             if (isPlayer) {
+                card  = Card(x, y, data); 
+
                 game.transport.addCardTopic(data.index, card.sprite.position.x, card.sprite.position.y, function() {
                     game.renderer.add(card);
                 });
             } else {
+                card = CardBack(x, y, data);
+
                 var cardTopic = topic + 'hand/' + data.index;
 
                 game.transport.subscribe(cardTopic + '/x', Number, function(x) {
@@ -38,6 +40,11 @@ function Hand(game, topic, isPlayer, x, y) {
 
                 game.renderer.add(card);
             }
+
+            cards.push(card); 
+            cards.forEach(reposition);
+            cards.forEach(reassign);
+
         }
     };
 
