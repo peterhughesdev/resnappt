@@ -25,7 +25,6 @@ function mouseup(e, app, ctx, data) {
                     // Adding a card to the effect pile
                     if (bottom.type.id === Entity.Types.EffectPile && player.hand.size() > 1) {
                         player.play(currentCard.props.index, 'EFFECT');
-                        app.game.endRound();
                         break;
                     }
                 }
