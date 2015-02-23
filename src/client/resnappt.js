@@ -32,7 +32,7 @@ function App(opts) {
     if (opts.debug) {
         diffusion.log('debug');
     } else {
-        diffusion.log('silent');
+        diffusion.log('info');
     }
        
     // Create transport, renderer & game

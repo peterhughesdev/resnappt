@@ -80,6 +80,14 @@ function Game(app) {
         fsm.change('playing');
     };
 
+    this.endRound = function() {
+        if (fsm.change('snapping')) {
+            player.setInactive(); 
+        } else {
+            fsm.change('playing');
+        }
+    };
+
     this.addParticipant = function(session, turn, isPlayer) {
         var player = new Player(app, session, turn, isPlayer);
 

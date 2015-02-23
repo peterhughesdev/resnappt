@@ -177,82 +177,38 @@ module.exports = ButtonFactory;
 
 },{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js":[function(require,module,exports){
 var Entity = require('./entity');
-
-var Rune = Entity.type('Rune', {
-    style : { 
-        font : "bold 100px LibianRunic",
-        fill : "blue"
-    }
-});
-
-var Name = Entity.type('Name', {
-    style : {
-        font : "bold 50px Arial",
-        fill : "blue"
-    }
-});
-
-var Desc = Entity.type('Desc', {
-    width : 140,
-    style : {
-        font : "30px Arial",
-        fill : "black"
-    }
-});
+var Text = require('./text');
 
 var Card = Entity.type('Card', {
-    width : 133,
-    height : 200,
+    width : 200,
+    height : 300,
     texture : '/images/card.jpg'
 });
 
-
 function CardFactory(x, y, data) {
-    var rune = "";
+    var rune = '';
     switch (data.rune) {
     case 'a':
-        rune = "\u0080";
+        rune = '!';
         break;
     case 'b':
-        rune = "\u0081";
+        rune = '"';
         break;
     case 'c':
-        rune = "\u0082";
+        rune = '#';
         break;
     case 'd':
-        rune = "\u0083";
+        rune = '$';
         break;
     };
 
-    var rune = Entity.createText(Rune, {
-        x : 80,
-        y : 90,
-        text : data.rune
-    });
 
-    var duration = Entity.createText(Rune, {
-        x : 110,
-        y : 240,
-        text : data.effect.duration
-    });
+    var rune = Text(100, 75, rune, 120, 'black');
+    var duration = Text(140, 230, data.effect.duration, 96, 'black');
+    var score = Text(140, -250, data.value, 96, 'black');
+    var name = Text(-40, -245, data.effect.name, 64, 'black');
 
-    var score = Entity.createText(Rune, {
-        x : 110,
-        y : -240,
-        text : data.value
-    });
-
-    var name = Entity.createText(Name, {
-        x : -40,
-        y : -240,
-        text : data.effect.name 
-    });
-
-    var desc = Entity.createText(Desc, {
-        x : -20,
-        y : 180,
-        text : "" 
-    });
+    name.sprite.width = 240;
 
     var texture = '/images/cards/' + data.effect.name.toLowerCase() + '.png';
 
@@ -275,12 +231,12 @@ function CardFactory(x, y, data) {
 
 module.exports = CardFactory;
 
-},{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/cardback.js":[function(require,module,exports){
+},{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js","./text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/cardback.js":[function(require,module,exports){
 var Entity = require('./entity');
 
 var CardBack = Entity.type('CardBack', {
-    width : 133,
-    height : 200,
+    width : 200,
+    height : 300,
     texture : '/images/cards/backface.png'
 });
 
@@ -298,8 +254,8 @@ module.exports = CardBackFactory;
 var Entity = require('./entity');
 
 var EffectPile = Entity.type('EffectPile', {
-    width : 133,
-    height : 200,
+    width : 200,
+    height : 300,
     texture : '/images/effect-placement.png'
 });
 
@@ -402,7 +358,7 @@ module.exports = Entity;
 var Entity = require('./entity');
 
 var GUI = Entity.type('PlayerGUI', {
-    width : 400,
+    width : 300,
     height : 200,
     texture : '/images/join-btn.png'
 });
@@ -426,8 +382,8 @@ module.exports = GUIFactory;
 var Entity = require('./entity');
 
 var ScorePile = Entity.type('ScorePile', {
-    width : 133,
-    height : 200,
+    width : 200,
+    height : 300,
     texture : '/images/effect-placement.png'
 });
 
@@ -443,14 +399,19 @@ module.exports = ScorePileFactory;
 },{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js":[function(require,module,exports){
 var Entity = require('./entity');
 
-var Text = Entity.type('Text', {
-    style : {
-        font : "bold 64px LibianRunic",
-        fill : "white"
-    } 
-});
+var Text = Entity.type('Text', {});
 
-function TextFactory(x, y, text) {
+function TextFactory(x, y, text, size, colour) {
+    if (!size) {
+        size = 64;
+    }
+    if (!colour) {
+        colour = 'white';
+    }
+    Text.style = {
+        font : "bold "+size+"px LibianRunic",
+        fill : colour
+    };
     return Entity.createText(Text, {
         x : x,
         y : y,
@@ -559,6 +520,14 @@ function Game(app) {
         }
 
         fsm.change('playing');
+    };
+
+    this.endRound = function() {
+        if (fsm.change('snapping')) {
+            player.setInactive(); 
+        } else {
+            fsm.change('playing');
+        }
     };
 
     this.addParticipant = function(session, turn, isPlayer) {
@@ -696,29 +665,31 @@ var Hand = require('./hand');
 
 // Player GUIs
 var playerPosition = [
-    { x : 200, y : 200 },
-    { x : 1800, y : 200 },
-    { x : 200, y : 1200 },
-    { x : 1800, y : 1200 }
+    { x : 100, y : 200 },
+    { x : 1700, y : 200 },
+    { x : 100, y : 1200 },
+    { x : 1700, y : 1200 }
 ];
 
 function Player(app, session, turn, isPlayer) { 
     var pos = playerPosition[turn];
 
-    var score = Text(0, 80, '0');
-    var name = Text(0, 80, 'Player ' + turn);
-    var icon = Text(200, 0, 'Playing');
+    var score = Text(0, 140, 'Score : 0', 18);
+    var name = Text(0, 120, 'Player ' + turn, 18);
+    var icon = Text(100, 120, 'Playing', 18);
 
     var gui = PlayerGUI(pos.x, pos.y, name, score, icon);
 
-
     var topic = 'sessions/' + session + '/';
     var active = false;
+    icon.sprite.alpha = 0;
 
     var hand = new Hand(app, topic, turn, isPlayer, pos.x, pos.y);
     this.hand = hand;
 
-    app.transport.subscribe(topic + 'score', String, score.sprite.setText);
+    app.transport.subscribe(topic + 'score', String, function(score) {
+        score.sprite.setText('Score : '+score);
+    });
     app.transport.subscribe(topic + 'hand', JSON.parse, hand.update);
 
     this.play = function(card, pile) {
@@ -1023,7 +994,7 @@ module.exports = SceneManager;
 var Text = require('../entities/text');
 
 function ConnectingScene(app, container) {
-    var connectingText = Text(1024, 700, 'Connecting...');
+    var connectingText = Text(1024, 700, 'Connecting...', 64, 'white');
 
     this.enter = function(done) {
         container.add(connectingText);
@@ -1054,7 +1025,7 @@ module.exports = EndScene;
 var Text = require('../entities/text');
 
 function ErrorScene(app, container) {
-    var message = Text(1024, 700, 'Error :(');
+    var message = Text(1024, 700, 'Error :(', 64, 'red');
 
     this.enter = function(done) {
         container.add(message);
@@ -1098,8 +1069,8 @@ function GameScene(app, container) {
     var scorePile = ScorePile(scoreCardPos.x, scoreCardPos.y);
     var scoreCard;
 
-    var deck = Text(1024, 240, 'Dealing');
-    var turn = Text(1024, 300, 'Waiting to start');
+    var deck = Text(1024, 140, 'Dealing', 48);
+    var turn = Text(1024, 200, 'Waiting to start', 48);
 
     var bg = Background();
     var board = Board(1024, 768, 'base');
@@ -1169,7 +1140,7 @@ function GameScene(app, container) {
 
     function updateSnap(timer) {
         if (app.game.getState() === 'snapping') {
-            turn.sprite.setText('Snap! ' + timer);
+            turn.sprite.setText('Snap : ' + timer);
         }
     }
 
@@ -1260,6 +1231,7 @@ var JoinBtn = require('../entities/button.js');
 var Board = require('../entities/board');
 var Background = require('../entities/background');
 var Text = require('../entities/text');
+var Card = require('../entities/card');
 
 function TitleScene(app, container) {
     var title = Title(1024, 768, '{resnappt}');
@@ -1328,7 +1300,7 @@ function TitleScene(app, container) {
 
 module.exports = TitleScene;
 
-},{"../entities/background":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/background.js","../entities/board":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/board.js","../entities/button.js":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/button.js","../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js","../entities/title":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/title.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/service-manager.js":[function(require,module,exports){
+},{"../entities/background":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/background.js","../entities/board":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/board.js","../entities/button.js":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/button.js","../entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js","../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js","../entities/title":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/title.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/service-manager.js":[function(require,module,exports){
 function ServiceManager(app) {
     var servicesForEvents = {};
     var servicesForTick = [];
@@ -1472,19 +1444,21 @@ function mouseup(e, app, ctx, data) {
             var gameState = app.game.getState();
             var player = app.game.player;
 
-            if (currentCard && gameState === 'playing') {
+            if (currentCard && player.isActive()) {
                 for (var i = 0; i < entities.length; ++i) {
                     var bottom = entities[i];
 
                     // Adding a card to the score pile
                     if (bottom.type.id === Entity.Types.ScorePile) {
                         player.play(currentCard.props.index, 'SCORE')
+                        app.game.endRound();
                         break;
                     }
 
                     // Adding a card to the effect pile
                     if (bottom.type.id === Entity.Types.EffectPile && player.hand.size() > 1) {
                         player.play(currentCard.props.index, 'EFFECT');
+                        app.game.endRound();
                         break;
                     }
                 }
@@ -1528,6 +1502,9 @@ module.exports = {
 },{"../entities/entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/services/move.js":[function(require,module,exports){
 var Entity = require('../entities/entity');
 
+var prevX;
+var prevY;
+
 function mousemove(e, app, ctx, data) {
     var pos = app.renderer.getLocalPosition(data);
 
@@ -1535,9 +1512,12 @@ function mousemove(e, app, ctx, data) {
         var currentCard = ctx.currentCard;
         var highlighted = ctx.highlighted;
 
-        if (currentCard) {
+        if (currentCard && (pos.x != prevX || pos.y != prevY)) {
             currentCard.sprite.position.x = pos.x;
             currentCard.sprite.position.y = pos.y;
+
+            prevX = pos.x;
+            prevY = pos.y;
 
             app.transport.updateCardTopic(currentCard.props.index, pos.x, pos.y);            
         } else {
@@ -1613,7 +1593,7 @@ function App(opts) {
     if (opts.debug) {
         diffusion.log('debug');
     } else {
-        diffusion.log('silent');
+        diffusion.log('info');
     }
        
     // Create transport, renderer & game

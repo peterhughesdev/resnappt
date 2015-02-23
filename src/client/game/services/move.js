@@ -1,5 +1,8 @@
 var Entity = require('../entities/entity');
 
+var prevX;
+var prevY;
+
 function mousemove(e, app, ctx, data) {
     var pos = app.renderer.getLocalPosition(data);
 
@@ -7,9 +10,12 @@ function mousemove(e, app, ctx, data) {
         var currentCard = ctx.currentCard;
         var highlighted = ctx.highlighted;
 
-        if (currentCard) {
+        if (currentCard && (pos.x != prevX || pos.y != prevY)) {
             currentCard.sprite.position.x = pos.x;
             currentCard.sprite.position.y = pos.y;
+
+            prevX = pos.x;
+            prevY = pos.y;
 
             app.transport.updateCardTopic(currentCard.props.index, pos.x, pos.y);            
         } else {

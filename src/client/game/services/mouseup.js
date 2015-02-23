@@ -11,19 +11,21 @@ function mouseup(e, app, ctx, data) {
             var gameState = app.game.getState();
             var player = app.game.player;
 
-            if (currentCard && gameState === 'playing') {
+            if (currentCard && player.isActive()) {
                 for (var i = 0; i < entities.length; ++i) {
                     var bottom = entities[i];
 
                     // Adding a card to the score pile
                     if (bottom.type.id === Entity.Types.ScorePile) {
                         player.play(currentCard.props.index, 'SCORE')
+                        app.game.endRound();
                         break;
                     }
 
                     // Adding a card to the effect pile
                     if (bottom.type.id === Entity.Types.EffectPile && player.hand.size() > 1) {
                         player.play(currentCard.props.index, 'EFFECT');
+                        app.game.endRound();
                         break;
                     }
                 }
