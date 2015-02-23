@@ -1485,10 +1485,10 @@ function animate(app, ctx, dt) {
             var board = boards[b];
             switch (board.props.name) {
             case 'dark':
-                board.sprite.alpha = 0.7 + (Math.sin(t*2) * 0.3);
+                board.sprite.alpha = 0.6 + (Math.sin(t*2) * 0.4);
                 break;
             case 'light':
-                board.sprite.alpha = 0.1 + (Math.cos(t*2) * 0.2);
+                board.sprite.alpha = 0.4 + (Math.cos(t) * 0.3);
                 break;
             case 'base':
                 board.sprite.alpha = 0.7 + (Math.sin(t*2) * 0.3);
@@ -1553,6 +1553,7 @@ function mouseup(e, app, ctx, data) {
                     // Adding a card to the score pile
                     if (bottom.type.id === Entity.Types.ScorePile) {
                         player.play(currentCard.props.index, 'SCORE')
+                        app.transport.updateCardTopic(currentCard.props.index, -1000, -1000);
                         app.game.endRound();
                         break;
                     }
@@ -1560,6 +1561,7 @@ function mouseup(e, app, ctx, data) {
                     // Adding a card to the effect pile
                     if (bottom.type.id === Entity.Types.EffectPile && player.hand.size() > 1) {
                         player.play(currentCard.props.index, 'EFFECT');
+                        app.transport.updateCardTopic(currentCard.props.index, -1000, -1000);
                         break;
                     }
                 }
