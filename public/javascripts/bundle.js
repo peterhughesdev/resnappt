@@ -144,7 +144,7 @@ var Entity = require('./entity');
 var Board = Entity.type('Board', {
     width : 660,
     height : 660,
-    texture : '/images/rune.png'
+    texture : '/images/board.png'
 });
 
 function BoardFactory(x, y, id) {
@@ -161,9 +161,9 @@ module.exports = BoardFactory;
 var Entity = require('./entity');
 
 var Button = Entity.type('Button', {
-    width : 150,
-    height : 150,
-    texture : '/images/join-btn.png'
+    width : 200,
+    height : 200,
+    texture : '/images/effect.png'
 });
 
 function ButtonFactory(x, y) {
@@ -255,8 +255,8 @@ var Entity = require('./entity');
 
 var EffectPile = Entity.type('EffectPile', {
     width : 200,
-    height : 300,
-    texture : '/images/effect-placement.png'
+    height : 200,
+    texture : '/images/effect.png'
 });
 
 function EffectPileFactory(x, y) {
@@ -382,9 +382,9 @@ module.exports = GUIFactory;
 var Entity = require('./entity');
 
 var ScorePile = Entity.type('ScorePile', {
-    width : 200,
+    width : 300,
     height : 300,
-    texture : '/images/effect-placement.png'
+    texture : '/images/score.png'
 });
 
 function ScorePileFactory(x, y) {
@@ -1048,9 +1048,9 @@ var Board = require('../entities/board');
 var Card = require('../entities/card');
 
 var effectCardPos = [
-    { x : 768, y : 768 },
-    { x : 1024, y : 1024 },
-    { x : 1280, y : 768 }
+    { x : 640, y : 768 },
+    { x : 1024, y : 1152 },
+    { x : 1408, y : 768 }
 ];
 
 var scoreCardPos = { x : 1024, y : 768 };
@@ -1156,6 +1156,14 @@ function GameScene(app, container) {
     function updateEffectPile(newEffectCards) {
         effectCards.forEach(container.remove);
 
+        effectPiles.forEach(function(e, i) {
+            if (i > newEffectCards.length) {
+                effectPiles[i].sprite.alpha = 0;
+            } else {
+                effectPiles[i].sprite.alpha = 1;
+            }
+        });
+
         newEffectCards.forEach(function(data, i) {
             var pos = effectCardPos[i];
             var effectCard = Card(pos.x, pos.y, data);
@@ -1235,8 +1243,8 @@ var Card = require('../entities/card');
 
 function TitleScene(app, container) {
     var title = Title(1024, 768, '{resnappt}');
-    var ready = JoinBtn(1024, 1015);
-    var joinText = Text(0, 0, "join");
+    var ready = JoinBtn(1024, 1152);
+    var joinText = Text(0, -8, "join");
     var bg = Background();
     var boardDark = Board(1024, 768, 'dark');
     var boardLight = Board(1024, 768, 'light');
@@ -1274,7 +1282,7 @@ function TitleScene(app, container) {
             ready.sprite.alpha -= 0.01;
 
             if (board.sprite.alpha < 1) {
-                board.sprite.alpha += 0.001;
+                board.sprite.alpha += 0.002;
             }
             if (boardDark.sprite.alpha > 0) {
                 boardDark.sprite.alpha -= 0.025;
@@ -1458,7 +1466,6 @@ function mouseup(e, app, ctx, data) {
                     // Adding a card to the effect pile
                     if (bottom.type.id === Entity.Types.EffectPile && player.hand.size() > 1) {
                         player.play(currentCard.props.index, 'EFFECT');
-                        app.game.endRound();
                         break;
                     }
                 }
