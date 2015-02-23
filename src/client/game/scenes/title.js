@@ -52,6 +52,10 @@ function TitleScene(app, container) {
         var id = setInterval(function() {
             title.sprite.alpha -= 0.01;
             ready.sprite.alpha -= 0.01;
+            rune1.sprite.alpha -= 0.01;
+            rune2.sprite.alpha -= 0.01;
+            rune3.sprite.alpha -= 0.01;
+            rune4.sprite.alpha -= 0.01;
 
             if (board.sprite.alpha < 1) {
                 board.sprite.alpha += 0.002;
