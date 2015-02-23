@@ -48,7 +48,8 @@ function Player(app, session, turn, isPlayer) {
     };
 
     this.remove = function() {
-     
+        app.transport.unsubscribe(topic + 'score');
+        app.transport.unsubscribe(topic + 'hand');
     };
 
     this.setActive = function() {

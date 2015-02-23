@@ -82,9 +82,17 @@ function Game(app) {
 
     this.end = function() {
         if (fsm.change('finished')) {
+            app.unsubscribe('turn');
+            app.unsubscribe('snap/timer');
+
             participants.forEach(function(p) {
-                p.setInactive();
+                p.remove();
             });
+
+            participants = [];
+
+            player = undefined;
+            self.player = undefined;
         }
     };
 

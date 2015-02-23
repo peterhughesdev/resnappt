@@ -533,9 +533,17 @@ function Game(app) {
 
     this.end = function() {
         if (fsm.change('finished')) {
+            app.unsubscribe('turn');
+            app.unsubscribe('snap/timer');
+
             participants.forEach(function(p) {
-                p.setInactive();
+                p.remove();
             });
+
+            participants = [];
+
+            player = undefined;
+            self.player = undefined;
         }
     };
 
@@ -715,8 +723,8 @@ function Player(app, session, turn, isPlayer) {
     var hand = new Hand(app, topic, turn, isPlayer, pos.x, pos.y);
     this.hand = hand;
 
-    app.transport.subscribe(topic + 'score', String, function(score) {
-        score.sprite.setText('Score : '+score);
+    app.transport.subscribe(topic + 'score', String, function(newScore) {
+        score.sprite.setText('Score : '+newScore);
     });
     app.transport.subscribe(topic + 'hand', JSON.parse, hand.update);
 
@@ -733,7 +741,8 @@ function Player(app, session, turn, isPlayer) {
     };
 
     this.remove = function() {
-     
+        app.transport.unsubscribe(topic + 'score');
+        app.transport.unsubscribe(topic + 'hand');
     };
 
     this.setActive = function() {
@@ -1071,7 +1080,8 @@ function EndScene(app, container) {
         
         results.forEach(function(result, i) {
             var resY = 650 + (80 * i);
-            var colour = result === highest ? '#8CE8FF' : 'white';
+            var colour = result.playerID  === app.transport.sessionID ? '#8CE8FF' : 
+                         (result === highest ? '#FFD633' : 'white');
                     
             var resText = Text(800, resY, 'Player ' + i + ' -- ' + result.score, colour);
             container.add(resText);
@@ -1196,7 +1206,7 @@ function GameScene(app, container) {
     };
 
     function endGame(res) {
-        if (res.state === 'NOT_PLAYING') {
+        if (res.state === 'FINISHED') {
             app.game.end();
             app.transition('finished');
         }   

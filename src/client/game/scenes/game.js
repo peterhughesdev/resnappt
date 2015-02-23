@@ -90,7 +90,7 @@ function GameScene(app, container) {
     };
 
     function endGame(res) {
-        if (res.state === 'NOT_PLAYING') {
+        if (res.state === 'FINISHED') {
             app.game.end();
             app.transition('finished');
         }   

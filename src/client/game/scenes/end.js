@@ -22,7 +22,8 @@ function EndScene(app, container) {
         
         results.forEach(function(result, i) {
             var resY = 650 + (80 * i);
-            var colour = result === highest ? '#8CE8FF' : 'white';
+            var colour = result.playerID  === app.transport.sessionID ? '#8CE8FF' : 
+                         (result === highest ? '#FFD633' : 'white');
                     
             var resText = Text(800, resY, 'Player ' + i + ' -- ' + result.score, colour);
             container.add(resText);
