@@ -39,7 +39,7 @@ exports.getCurrentPlayer = function() {
 };
 
 exports.getPreviousPlayer = function() {
-    var prev = (turn === 0) ? players.length : turn - 1;
+    var prev = (turn === 0) ? players.length - 1 : turn - 1;
     return players[prev];
 };
 
