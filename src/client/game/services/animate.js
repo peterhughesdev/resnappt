@@ -27,6 +27,17 @@ function animate(app, ctx, dt) {
             title.sprite.height = title.sprite.height + (Math.sin(t) * 0.0768);
         }
 
+        var runes = entities.filter(function(e) {
+            return e.type.id === Entity.Types.Text;
+        });
+
+        for (var r in runes) {
+            var rune = runes[r];
+            rune.sprite.width = rune.sprite.width + (Math.sin(t / 3.0) * 0.2048);
+            rune.sprite.height = rune.sprite.height + (Math.sin(t / 3.0) * 0.1536);
+            rune.sprite.alpha = 0.5 + (Math.cos(t / 7.0) * 0.5);
+        }
+
         var boards = entities.filter(function(e) {
             return e.type.id === Entity.Types.Board;
         });

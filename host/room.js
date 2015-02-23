@@ -66,6 +66,9 @@ var addPlayer = function(playerID) {
 };
 
 var checkReadiness = function() {
+    if (game.isPlaying()) {
+        return;
+    }
     console.log('interested parties = '+interest.length);
     console.log('registered players = '+playerService.getNPlayers());
     if ((playerService.getNPlayers() === interest.length && playerService.getNPlayers() > 1)

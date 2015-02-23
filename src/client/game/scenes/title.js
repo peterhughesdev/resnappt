@@ -13,12 +13,21 @@ function TitleScene(app, container) {
     var boardLight = Board(1024, 768, 'light');
     var board = Board(1024, 768, 'base');
 
+    var rune1 = Text(200, 200, '!', 192);
+    var rune2 = Text(1848, 200, '"', 192);
+    var rune3 = Text(200, 1336, '#', 192);
+    var rune4 = Text(1848, 1336, '$', 192);
+
     this.enter = function(done) {
         container.add(bg);
         container.add(board);
         container.add(boardDark);
         container.add(boardLight);
         container.add(title);
+        container.add(rune1);
+        container.add(rune2);
+        container.add(rune3);
+        container.add(rune4);
 
         var blur = new PIXI.BlurFilter();
         blur.blurX = 6;
