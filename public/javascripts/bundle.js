@@ -217,10 +217,10 @@ function CardFactory(x, y, data) {
     };
 
 
-    var rune = Text(55, 32, rune, 60, 'black');
-    var duration = Text(70, 115, data.effect.duration, 48, 'black');
-    var score = Text(72, -125, data.value, 48, 'black');
-    var name = Text(-20, -122, data.effect.name, 32, 'black');
+    var rune = Text(55, 32, rune, 60, 'black', null, false);
+    var duration = Text(70, 115, data.effect.duration, 48, 'black', null, false);
+    var score = Text(72, -125, data.value, 48, 'black', null, false);
+    var name = Text(-20, -122, data.effect.name, 32, 'black', null, false);
 
     name.sprite.width = 230;
 
@@ -415,17 +415,19 @@ var Entity = require('./entity');
 
 var Text = Entity.type('Text', {});
 
-function TextFactory(x, y, text, size, colour) {
-    if (!size) {
-        size = 64;
-    }
-    if (!colour) {
-        colour = 'white';
-    }
+function TextFactory(x, y, text, size, colour, align, shadow) {
+    size = size || 64;
+    colour = colour || 'white';
+    align = align || 'left';
+    shadow = shadow === undefined ? true : shadow;
+
     Text.style = {
         font : "bold "+size+"px LibianRunic",
-        fill : colour
+        fill : colour,
+        align : align,
+        dropShadow : shadow
     };
+
     return Entity.createText(Text, {
         x : x,
         y : y,
@@ -1066,7 +1068,7 @@ module.exports = ConnectingScene;
 var Text = require('../entities/text');
 
 function EndScene(app, container) {
-    var endingText = Text(1024, 400, 'Game over!', 64, 'white');
+    var endingText = Text(1024, 400, 'Game ove!', 64, 'white');
    
     var scoreSub;
 
@@ -1087,10 +1089,10 @@ function EndScene(app, container) {
         
         results.forEach(function(result, i) {
             var resY = 650 + (80 * i);
-            var colour = result.playerID  === app.transport.sessionID ? '#8CE8FF' : 
-                         (result === highest ? '#FFD633' : 'white');
+            var colour = result === highest ? '#FFD633' : 
+                         (result.playerID  === app.transport.sessionID ? '#8CE8FF' : 'white');
                     
-            var resText = Text(800, resY, 'Player ' + i + ' -- ' + result.score, colour);
+            var resText = Text(1024, resY, 'Player ' + i + ' -- ' + result.score, 50, colour);
             container.add(resText);
         });
     }

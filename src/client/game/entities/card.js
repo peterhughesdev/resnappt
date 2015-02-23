@@ -25,10 +25,10 @@ function CardFactory(x, y, data) {
     };
 
 
-    var rune = Text(55, 32, rune, 60, 'black');
-    var duration = Text(70, 115, data.effect.duration, 48, 'black');
-    var score = Text(72, -125, data.value, 48, 'black');
-    var name = Text(-20, -122, data.effect.name, 32, 'black');
+    var rune = Text(55, 32, rune, 60, 'black', null, false);
+    var duration = Text(70, 115, data.effect.duration, 48, 'black', null, false);
+    var score = Text(72, -125, data.value, 48, 'black', null, false);
+    var name = Text(-20, -122, data.effect.name, 32, 'black', null, false);
 
     name.sprite.width = 230;
 

@@ -1,7 +1,7 @@
 var Text = require('../entities/text');
 
 function EndScene(app, container) {
-    var endingText = Text(1024, 400, 'Game over!', 64, 'white');
+    var endingText = Text(1024, 400, 'Game ove!', 64, 'white');
    
     var scoreSub;
 
@@ -22,10 +22,10 @@ function EndScene(app, container) {
         
         results.forEach(function(result, i) {
             var resY = 650 + (80 * i);
-            var colour = result.playerID  === app.transport.sessionID ? '#8CE8FF' : 
-                         (result === highest ? '#FFD633' : 'white');
+            var colour = result === highest ? '#FFD633' : 
+                         (result.playerID  === app.transport.sessionID ? '#8CE8FF' : 'white');
                     
-            var resText = Text(800, resY, 'Player ' + i + ' -- ' + result.score, colour);
+            var resText = Text(1024, resY, 'Player ' + i + ' -- ' + result.score, 50, colour);
             container.add(resText);
         });
     }
