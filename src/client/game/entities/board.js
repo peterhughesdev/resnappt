@@ -3,7 +3,7 @@ var Entity = require('./entity');
 var Board = Entity.type('Board', {
     width : 660,
     height : 660,
-    texture : '/images/rune.png'
+    texture : '/images/board.png'
 });
 
 function BoardFactory(x, y, id) {

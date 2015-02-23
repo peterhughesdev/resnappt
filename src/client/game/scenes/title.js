@@ -7,8 +7,8 @@ var Card = require('../entities/card');
 
 function TitleScene(app, container) {
     var title = Title(1024, 768, '{resnappt}');
-    var ready = JoinBtn(1024, 1015);
-    var joinText = Text(0, 0, "join");
+    var ready = JoinBtn(1024, 1152);
+    var joinText = Text(0, -8, "join");
     var bg = Background();
     var boardDark = Board(1024, 768, 'dark');
     var boardLight = Board(1024, 768, 'light');
@@ -46,7 +46,7 @@ function TitleScene(app, container) {
             ready.sprite.alpha -= 0.01;
 
             if (board.sprite.alpha < 1) {
-                board.sprite.alpha += 0.001;
+                board.sprite.alpha += 0.002;
             }
             if (boardDark.sprite.alpha > 0) {
                 boardDark.sprite.alpha -= 0.025;

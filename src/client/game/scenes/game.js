@@ -6,9 +6,9 @@ var Board = require('../entities/board');
 var Card = require('../entities/card');
 
 var effectCardPos = [
-    { x : 768, y : 768 },
-    { x : 1024, y : 1024 },
-    { x : 1280, y : 768 }
+    { x : 640, y : 768 },
+    { x : 1024, y : 1152 },
+    { x : 1408, y : 768 }
 ];
 
 var scoreCardPos = { x : 1024, y : 768 };
@@ -113,6 +113,14 @@ function GameScene(app, container) {
 
     function updateEffectPile(newEffectCards) {
         effectCards.forEach(container.remove);
+
+        effectPiles.forEach(function(e, i) {
+            if (i > newEffectCards.length) {
+                effectPiles[i].sprite.alpha = 0;
+            } else {
+                effectPiles[i].sprite.alpha = 1;
+            }
+        });
 
         newEffectCards.forEach(function(data, i) {
             var pos = effectCardPos[i];

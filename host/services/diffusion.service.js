@@ -81,11 +81,14 @@ var playerCommand = function(message, topic) {
     }
 };
 
-var addTopic = function(topic) {
+var addTopic = function(topic, data) {
+    if (!data) {
+        data = '{}';
+    }
     if (session.isConnected()) {
         var topics = session.topics;
 
-        topics.add(topic, '{}').on('complete', function() {
+        topics.add(topic, data).on('complete', function() {
             topics.removeWithSession(topic).on('complete', function() {
                 console.log('added '+topic);
             });
@@ -101,7 +104,7 @@ var createTopicTree = function() {
         addTopic('turn');
         addTopic('deck');
         addTopic('pile/score');
-        addTopic('pile/effects');
+        addTopic('pile/effects', '[]');
         addTopic('summary');
         addTopic('snap/winner');
         addTopic('snap/timer');

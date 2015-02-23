@@ -1,9 +1,9 @@
 var Entity = require('./entity');
 
 var ScorePile = Entity.type('ScorePile', {
-    width : 200,
+    width : 300,
     height : 300,
-    texture : '/images/effect-placement.png'
+    texture : '/images/score.png'
 });
 
 function ScorePileFactory(x, y) {
