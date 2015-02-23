@@ -543,7 +543,6 @@ function Game(app) {
             participants = [];
 
             player = undefined;
-            self.player = undefined;
         }
     };
 
@@ -741,6 +740,9 @@ function Player(app, session, turn, isPlayer) {
     };
 
     this.remove = function() {
+        active = false;
+        icon.sprite.alpha = 0;
+
         app.transport.unsubscribe(topic + 'score');
         app.transport.unsubscribe(topic + 'hand');
     };

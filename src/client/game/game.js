@@ -92,7 +92,6 @@ function Game(app) {
             participants = [];
 
             player = undefined;
-            self.player = undefined;
         }
     };
 
