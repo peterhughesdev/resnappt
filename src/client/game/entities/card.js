@@ -25,12 +25,12 @@ function CardFactory(x, y, data) {
     };
 
 
-    var rune = Text(100, 75, rune, 120, 'black');
-    var duration = Text(140, 230, data.effect.duration, 96, 'black');
-    var score = Text(140, -250, data.value, 96, 'black');
-    var name = Text(-40, -245, data.effect.name, 64, 'black');
+    var rune = Text(55, 32, rune, 60, 'black');
+    var duration = Text(70, 115, data.effect.duration, 48, 'black');
+    var score = Text(72, -125, data.value, 48, 'black');
+    var name = Text(-20, -122, data.effect.name, 32, 'black');
 
-    name.sprite.width = 240;
+    name.sprite.width = 230;
 
     var texture = '/images/cards/' + data.effect.name.toLowerCase() + '.png';
 
