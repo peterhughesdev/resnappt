@@ -5,7 +5,7 @@ function Hand(game, topic, turn, isPlayer, x, y) {
     var cards = [];
     var cardByIndex = {};
 
-    var offset = turn % 2 ? 35 : 0;
+    var offset = turn % 2 ? 200 : 50;
 
     var self = this;
 

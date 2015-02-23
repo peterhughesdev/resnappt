@@ -1,9 +1,9 @@
 var Entity = require('./entity');
 
 var GUI = Entity.type('PlayerGUI', {
-    width : 300,
-    height : 200,
-    texture : '/images/join-btn.png'
+    width : 400,
+    height : 400,
+    texture : '/images/transparent.png'
 });
 
 function GUIFactory(x, y, name, score, icon) {
