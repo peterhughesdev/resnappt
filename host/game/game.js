@@ -87,8 +87,9 @@ function Game() {
             return;
         }
 
-        if (player.playerID !== playerID) {
+        if (!player || player.playerID !== playerID) {
             console.log('Not player '+playerID+' turn');
+            return;
         }
 
         var card = player.playCard(c);

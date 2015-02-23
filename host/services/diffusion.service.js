@@ -81,28 +81,35 @@ var playerCommand = function(message, topic) {
     }
 };
 
+var addTopic = function(topic) {
+    if (session.isConnected()) {
+        var topics = session.topics;
+
+        topics.add(topic, '{}').on('complete', function() {
+            topics.removeWithSession(topic).on('complete', function() {
+                console.log('added '+topic);
+            });
+        });
+    }
+};
+
 var createTopicTree = function() {
     if (session.isConnected()) {
         // add topics that we need here
         var topics = session.topics;
 
-        topics.add('turn', '{}').on('complete', function() {
-            topics.removeWithSession('turn').on('complete', function() {
-                console.log('added turn topic');
-            });
-        });
-        topics.add('deck', '{}').on('complete', function() {
-            topics.removeWithSession('deck').on('complete', function() {
-                console.log('added deck topic');
-            });
-        });
-        topics.add('pile/score', '{}');
-        topics.add('pile/effects', '[]');
-        topics.add('summary', '{}');
-        topics.add('snap/winner', '{}');
-        topics.add('snap/timer', '{}');
+        addTopic('turn');
+        addTopic('deck');
+        addTopic('pile/score');
+        addTopic('pile/effects');
+        addTopic('summary');
+        addTopic('snap/winner');
+        addTopic('snap/timer');
+
         topics.add('state', '{}').on('complete', function() {
-            publish('state', JSON.stringify({state:'NOT_PLAYING'}));
+            topics.removeWithSession('state').on('complete', function() {
+                publish('state', JSON.stringify({state:'NOT_PLAYING'}));
+            });
         });
     }
 };

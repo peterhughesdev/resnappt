@@ -3,6 +3,7 @@ var JoinBtn = require('../entities/button.js');
 var Board = require('../entities/board');
 var Background = require('../entities/background');
 var Text = require('../entities/text');
+var Card = require('../entities/card');
 
 function TitleScene(app, container) {
     var title = Title(1024, 768, '{resnappt}');

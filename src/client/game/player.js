@@ -5,29 +5,31 @@ var Hand = require('./hand');
 
 // Player GUIs
 var playerPosition = [
-    { x : 200, y : 200 },
-    { x : 1800, y : 200 },
-    { x : 200, y : 1200 },
-    { x : 1800, y : 1200 }
+    { x : 100, y : 200 },
+    { x : 1700, y : 200 },
+    { x : 100, y : 1200 },
+    { x : 1700, y : 1200 }
 ];
 
 function Player(app, session, turn, isPlayer) { 
     var pos = playerPosition[turn];
 
-    var score = Text(0, 80, '0');
-    var name = Text(0, 80, 'Player ' + turn);
-    var icon = Text(200, 0, 'Playing');
+    var score = Text(0, 140, 'Score : 0', 18);
+    var name = Text(0, 120, 'Player ' + turn, 18);
+    var icon = Text(100, 120, 'Playing', 18);
 
     var gui = PlayerGUI(pos.x, pos.y, name, score, icon);
 
-
     var topic = 'sessions/' + session + '/';
     var active = false;
+    icon.sprite.alpha = 0;
 
     var hand = new Hand(app, topic, turn, isPlayer, pos.x, pos.y);
     this.hand = hand;
 
-    app.transport.subscribe(topic + 'score', String, score.sprite.setText);
+    app.transport.subscribe(topic + 'score', String, function(score) {
+        score.sprite.setText('Score : '+score);
+    });
     app.transport.subscribe(topic + 'hand', JSON.parse, hand.update);
 
     this.play = function(card, pile) {

@@ -27,8 +27,8 @@ function GameScene(app, container) {
     var scorePile = ScorePile(scoreCardPos.x, scoreCardPos.y);
     var scoreCard;
 
-    var deck = Text(1024, 240, 'Dealing');
-    var turn = Text(1024, 300, 'Waiting to start');
+    var deck = Text(1024, 140, 'Dealing', 48);
+    var turn = Text(1024, 200, 'Waiting to start', 48);
 
     var bg = Background();
     var board = Board(1024, 768, 'base');
@@ -98,7 +98,7 @@ function GameScene(app, container) {
 
     function updateSnap(timer) {
         if (app.game.getState() === 'snapping') {
-            turn.sprite.setText('Snap! ' + timer);
+            turn.sprite.setText('Snap : ' + timer);
         }
     }
 

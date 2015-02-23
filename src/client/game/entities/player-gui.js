@@ -1,7 +1,7 @@
 var Entity = require('./entity');
 
 var GUI = Entity.type('PlayerGUI', {
-    width : 400,
+    width : 300,
     height : 200,
     texture : '/images/join-btn.png'
 });

@@ -1,8 +1,8 @@
 var Entity = require('./entity');
 
 var EffectPile = Entity.type('EffectPile', {
-    width : 133,
-    height : 200,
+    width : 200,
+    height : 300,
     texture : '/images/effect-placement.png'
 });
 

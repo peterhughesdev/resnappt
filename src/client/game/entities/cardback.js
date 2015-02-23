@@ -1,8 +1,8 @@
 var Entity = require('./entity');
 
 var CardBack = Entity.type('CardBack', {
-    width : 133,
-    height : 200,
+    width : 200,
+    height : 300,
     texture : '/images/cards/backface.png'
 });
 

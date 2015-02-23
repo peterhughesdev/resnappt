@@ -1,80 +1,36 @@
 var Entity = require('./entity');
-
-var Rune = Entity.type('Rune', {
-    style : { 
-        font : "bold 100px LibianRunic",
-        fill : "blue"
-    }
-});
-
-var Name = Entity.type('Name', {
-    style : {
-        font : "bold 50px Arial",
-        fill : "blue"
-    }
-});
-
-var Desc = Entity.type('Desc', {
-    width : 140,
-    style : {
-        font : "30px Arial",
-        fill : "black"
-    }
-});
+var Text = require('./text');
 
 var Card = Entity.type('Card', {
-    width : 133,
-    height : 200,
+    width : 200,
+    height : 300,
     texture : '/images/card.jpg'
 });
 
-
 function CardFactory(x, y, data) {
-    var rune = "";
+    var rune = '';
     switch (data.rune) {
     case 'a':
-        rune = "\u0080";
+        rune = '!';
         break;
     case 'b':
-        rune = "\u0081";
+        rune = '"';
         break;
     case 'c':
-        rune = "\u0082";
+        rune = '#';
         break;
     case 'd':
-        rune = "\u0083";
+        rune = '$';
         break;
     };
 
-    var rune = Entity.createText(Rune, {
-        x : 80,
-        y : 90,
-        text : data.rune
-    });
 
-    var duration = Entity.createText(Rune, {
-        x : 110,
-        y : 240,
-        text : data.effect.duration
-    });
+    var rune = Text(100, 75, rune, 120, 'black');
+    var duration = Text(140, 230, data.effect.duration, 96, 'black');
+    var score = Text(140, -250, data.value, 96, 'black');
+    var name = Text(-40, -245, data.effect.name, 64, 'black');
 
-    var score = Entity.createText(Rune, {
-        x : 110,
-        y : -240,
-        text : data.value
-    });
-
-    var name = Entity.createText(Name, {
-        x : -40,
-        y : -240,
-        text : data.effect.name 
-    });
-
-    var desc = Entity.createText(Desc, {
-        x : -20,
-        y : 180,
-        text : "" 
-    });
+    name.sprite.width = 240;
 
     var texture = '/images/cards/' + data.effect.name.toLowerCase() + '.png';
 
