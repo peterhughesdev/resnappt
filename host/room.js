@@ -32,7 +32,7 @@ var finaliseRoom = function() {
     .on('updateHand', diffusion.drawCard)
     .on('updateEffects', diffusion.updateEffectsPile)
     .on('updateDeck', diffusion.updateDeck)
-    .on('endGame', diffusion.scoreSummary)
+    .on('gameEnd', diffusion.scoreSummary)
     .on('snapTimer', diffusion.snapTimer)
     .on('playerSnapped', diffusion.publishSnapper)
     .start();

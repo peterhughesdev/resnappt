@@ -144,6 +144,8 @@ exports.snapTimer = function(snap) {
 };
 
 exports.scoreSummary = function(scores) {
+    var message = { state : 'FINISHED' };
+    publish('state', JSON.stringify(message));
     publish('summary', JSON.stringify(scores));
 };
 
