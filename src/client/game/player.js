@@ -30,8 +30,8 @@ function Player(app, session, turn, isPlayer) {
     var hand = new Hand(app, topic, turn, isPlayer, pos.x, pos.y);
     this.hand = hand;
 
-    app.transport.subscribe(topic + 'score', String, function(score) {
-        score.sprite.setText('Score : '+score);
+    app.transport.subscribe(topic + 'score', String, function(newScore) {
+        score.sprite.setText('Score : '+newScore);
     });
     app.transport.subscribe(topic + 'hand', JSON.parse, hand.update);
 

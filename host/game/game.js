@@ -207,6 +207,13 @@ function Game() {
             emitter.emit('updateTurn', player.playerID);
 
             self.drawHand(player);
+
+            if (finalRound && player.getHand().length === 0) {
+                player.finished();
+                state.endGame();
+                self.end();
+                return;
+            }
         }
         if (deck.remaining() === 0) {
             self.finalRound();
