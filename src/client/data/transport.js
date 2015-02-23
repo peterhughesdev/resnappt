@@ -44,11 +44,16 @@ function Transport(options) {
     };
 
     this.subscribe = function(topic, type, cb) {
-        var sub = session.subscribe(topic, log).on('error', log).transform(type);
+        var sub = session.subscribe(topic, log);
         
+        if (type) {
+            sub = sub.transform(type);
+        }
+
         if (cb) {
             sub.on('update', cb);
         }
+
         console.log('Subscribing to topic: ' + topic);
         return sub;
     };

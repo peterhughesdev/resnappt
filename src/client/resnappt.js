@@ -22,9 +22,9 @@ function App(opts) {
         'pre:joining'    : ['joining', 'pre:error'],
         'joining'        : ['pre:playing', 'pre:spectating', 'pre:error'],
         'pre:playing'    : ['playing', 'pre:error'],
-        'playing'        : ['finished', 'pre:error'],
+        'playing'        : ['pre:finished', 'pre:error'],
         'pre:spectating' : ['spectating', 'pre:error'],
-        'spectating'     : ['finished', 'pre:error'],
+        'spectating'     : ['pre:finished', 'pre:error'],
         'pre:finished'   : ['finished', 'pre:error'],
         'finished'       : ['pre:connected', 'pre:error']
     });

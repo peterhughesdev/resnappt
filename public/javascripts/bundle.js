@@ -61,11 +61,16 @@ function Transport(options) {
     };
 
     this.subscribe = function(topic, type, cb) {
-        var sub = session.subscribe(topic, log).on('error', log).transform(type);
+        var sub = session.subscribe(topic, log);
         
+        if (type) {
+            sub = sub.transform(type);
+        }
+
         if (cb) {
             sub.on('update', cb);
         }
+
         console.log('Subscribing to topic: ' + topic);
         return sub;
     };
@@ -1677,9 +1682,9 @@ function App(opts) {
         'pre:joining'    : ['joining', 'pre:error'],
         'joining'        : ['pre:playing', 'pre:spectating', 'pre:error'],
         'pre:playing'    : ['playing', 'pre:error'],
-        'playing'        : ['finished', 'pre:error'],
+        'playing'        : ['pre:finished', 'pre:error'],
         'pre:spectating' : ['spectating', 'pre:error'],
-        'spectating'     : ['finished', 'pre:error'],
+        'spectating'     : ['pre:finished', 'pre:error'],
         'pre:finished'   : ['finished', 'pre:error'],
         'finished'       : ['pre:connected', 'pre:error']
     });
