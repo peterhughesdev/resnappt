@@ -69,10 +69,19 @@ function Transport(options) {
         var my = new diffusion.metadata.Decimal(y, 20);
 
         var cardTopic = sessionTopic + '/hand/' + index;
-        session.topics.add(cardTopic + '/x', mx).on('complete', function() {
-            session.topics.add(cardTopic + '/y', my).on('complete', function() {
-               cb();
+        session.topics.add(cardTopic, index).on('complete', function() {
+            session.topics.add(cardTopic + '/x', mx).on('complete', function() {
+                session.topics.add(cardTopic + '/y', my).on('complete', function() {
+                    cb();
+                });
             });
+
+        });
+    };
+
+    this.removeCardTopic = function(index) {
+        session.topics.remove(sessionTopic + '/hand/' + index).on('complete', function() {
+            console.log('Removed card topic: ' + index);
         });
     };
 

@@ -86,10 +86,19 @@ function Transport(options) {
         var my = new diffusion.metadata.Decimal(y, 20);
 
         var cardTopic = sessionTopic + '/hand/' + index;
-        session.topics.add(cardTopic + '/x', mx).on('complete', function() {
-            session.topics.add(cardTopic + '/y', my).on('complete', function() {
-               cb();
+        session.topics.add(cardTopic, index).on('complete', function() {
+            session.topics.add(cardTopic + '/x', mx).on('complete', function() {
+                session.topics.add(cardTopic + '/y', my).on('complete', function() {
+                    cb();
+                });
             });
+
+        });
+    };
+
+    this.removeCardTopic = function(index) {
+        session.topics.remove(sessionTopic + '/hand/' + index).on('complete', function() {
+            console.log('Removed card topic: ' + index);
         });
     };
 
@@ -358,9 +367,9 @@ module.exports = Entity;
 var Entity = require('./entity');
 
 var GUI = Entity.type('PlayerGUI', {
-    width : 300,
-    height : 200,
-    texture : '/images/join-btn.png'
+    width : 400,
+    height : 400,
+    texture : '/images/transparent.png'
 });
 
 function GUIFactory(x, y, name, score, icon) {
@@ -452,7 +461,7 @@ function Game(app) {
     var fsm = FSM.create('starting', {
         'starting' : ['playing'],
         'playing'  : ['snapping', 'finished'],
-        'snapping' : ['playing'],
+        'snapping' : ['playing', 'finished'],
         'finished' : ['starting']
     });
     
@@ -564,7 +573,7 @@ function Hand(game, topic, turn, isPlayer, x, y) {
     var cards = [];
     var cardByIndex = {};
 
-    var offset = turn % 2 ? 35 : 0;
+    var offset = turn % 2 ? 200 : 50;
 
     var self = this;
 
@@ -627,6 +636,11 @@ function Hand(game, topic, turn, isPlayer, x, y) {
                     card.sprite.position.y = y;
                 });
 
+                game.transport.subscribe(cardTopic).on('unsubscribed', function() {
+                    console.log('Unsubscribed from card topic: ' + data.index);
+                    self.remove(data.index);
+                });
+
                 game.renderer.add(card, 5);
             }
             
@@ -642,6 +656,10 @@ function Hand(game, topic, turn, isPlayer, x, y) {
             delete cardByIndex[index];
             
             cards.forEach(reassign);
+
+            if (isPlayer) {
+                game.transport.removeCardTopic(index);
+            }
         }
     };
 
@@ -672,18 +690,21 @@ var Hand = require('./hand');
 
 // Player GUIs
 var playerPosition = [
-    { x : 100, y : 200 },
-    { x : 1700, y : 200 },
-    { x : 100, y : 1200 },
-    { x : 1700, y : 1200 }
+    { x : 200, y : 200 },
+    { x : 1848, y : 200 },
+    { x : 200, y : 1336 },
+    { x : 1848, y : 1336 }
 ];
 
 function Player(app, session, turn, isPlayer) { 
     var pos = playerPosition[turn];
 
-    var score = Text(0, 140, 'Score : 0', 18);
-    var name = Text(0, 120, 'Player ' + turn, 18);
-    var icon = Text(100, 120, 'Playing', 18);
+    var yOffset = turn < 2 ? 0 : 315;
+    var xOffset = turn % 2 ? 96 : 0;
+
+    var score = Text(-60 - xOffset, 170 - yOffset, 'Score : 0', 28);
+    var name = Text(-60 - xOffset, 145 - yOffset, 'Player ' + turn, 28);
+    var icon = Text(60 - xOffset, 145 - yOffset, 'Playing', 28);
 
     var gui = PlayerGUI(pos.x, pos.y, name, score, icon);
 
@@ -907,8 +928,8 @@ var FSM = require('../util/fsm');
 function Container(app) {
     var added = [];
     
-    this.add = function(entity) {
-        app.renderer.add(entity);
+    this.add = function(entity, z) {
+        app.renderer.add(entity, z);
         added.push(entity);
     };
 
@@ -1144,8 +1165,8 @@ function GameScene(app, container) {
         effectPiles.forEach(container.add);
         container.add(scorePile);
 
-        container.add(deck);
-        container.add(turn);
+        container.add(deck, 20);
+        container.add(turn, 20);
 
         turnSub = app.transport.subscribe('turn', String).on('update', updateTurn);
         deckSub = app.transport.subscribe('deck', String).on('update', updateDeck);
@@ -1205,7 +1226,7 @@ function GameScene(app, container) {
         }
 
         scoreCard = Card(scoreCardPos.x, scoreCardPos.y, newScoreCard);
-        container.add(scoreCard);
+        container.add(scoreCard, 7);
     }
 
     function updateEffectPile(newEffectCards) {
@@ -1223,7 +1244,7 @@ function GameScene(app, container) {
             var pos = effectCardPos[i];
             var effectCard = Card(pos.x, pos.y, data);
             
-            container.add(effectCard);
+            container.add(effectCard, 7);
             effectCards.push(effectCard);
         });
     }

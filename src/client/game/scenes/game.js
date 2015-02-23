@@ -59,8 +59,8 @@ function GameScene(app, container) {
         effectPiles.forEach(container.add);
         container.add(scorePile);
 
-        container.add(deck);
-        container.add(turn);
+        container.add(deck, 20);
+        container.add(turn, 20);
 
         turnSub = app.transport.subscribe('turn', String).on('update', updateTurn);
         deckSub = app.transport.subscribe('deck', String).on('update', updateDeck);
@@ -120,7 +120,7 @@ function GameScene(app, container) {
         }
 
         scoreCard = Card(scoreCardPos.x, scoreCardPos.y, newScoreCard);
-        container.add(scoreCard);
+        container.add(scoreCard, 7);
     }
 
     function updateEffectPile(newEffectCards) {
@@ -138,7 +138,7 @@ function GameScene(app, container) {
             var pos = effectCardPos[i];
             var effectCard = Card(pos.x, pos.y, data);
             
-            container.add(effectCard);
+            container.add(effectCard, 7);
             effectCards.push(effectCard);
         });
     }

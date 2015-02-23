@@ -68,6 +68,11 @@ function Hand(game, topic, turn, isPlayer, x, y) {
                     card.sprite.position.y = y;
                 });
 
+                game.transport.subscribe(cardTopic).on('unsubscribed', function() {
+                    console.log('Unsubscribed from card topic: ' + data.index);
+                    self.remove(data.index);
+                });
+
                 game.renderer.add(card, 5);
             }
             
@@ -83,6 +88,10 @@ function Hand(game, topic, turn, isPlayer, x, y) {
             delete cardByIndex[index];
             
             cards.forEach(reassign);
+
+            if (isPlayer) {
+                game.transport.removeCardTopic(index);
+            }
         }
     };
 

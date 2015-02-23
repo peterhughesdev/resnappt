@@ -3,8 +3,8 @@ var FSM = require('../util/fsm');
 function Container(app) {
     var added = [];
     
-    this.add = function(entity) {
-        app.renderer.add(entity);
+    this.add = function(entity, z) {
+        app.renderer.add(entity, z);
         added.push(entity);
     };
 

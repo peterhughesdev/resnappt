@@ -10,7 +10,7 @@ function Game(app) {
     var fsm = FSM.create('starting', {
         'starting' : ['playing'],
         'playing'  : ['snapping', 'finished'],
-        'snapping' : ['playing'],
+        'snapping' : ['playing', 'finished'],
         'finished' : ['starting']
     });
     
