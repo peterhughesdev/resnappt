@@ -38,7 +38,7 @@ function animate(app, ctx, dt) {
                 board.sprite.alpha = 0.6 + (Math.sin(t*2) * 0.4);
                 break;
             case 'light':
-                board.sprite.alpha = 0.3 + (Math.cos(t) * 0.3);
+                board.sprite.alpha = 0.4 + (Math.cos(t) * 0.3);
                 break;
             case 'base':
                 board.sprite.alpha = 0.7 + (Math.sin(t*2) * 0.3);
