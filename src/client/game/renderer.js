@@ -52,6 +52,8 @@ function Renderer(app) {
                 case Type.ADD :
                     container.addChild(action.entity.sprite);
                     entities.push(action.entity);
+
+                    container.children.sort(byDepth);
                     break;
                 case Type.REMOVE :
                     container.removeChild(action.entity.sprite);
@@ -80,7 +82,15 @@ function Renderer(app) {
         }
     }
 
-    this.add = function(entity) {
+    function byDepth(a, b) {
+        return a.z === b.z ? 0 : (a.z < b.z ? -1 : 1);
+    }
+
+    this.add = function(entity, z) {
+        z = z || 0;
+
+        entity.sprite.z = z;
+
         pending.push({
             type : Type.ADD,
             entity : entity

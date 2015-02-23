@@ -51,7 +51,7 @@ function Hand(game, topic, turn, isPlayer, x, y) {
                 position(card, i);
                 
                 game.transport.addCardTopic(data.index, card.sprite.position.x, card.sprite.position.y, function() {
-                    game.renderer.add(card);
+                    game.renderer.add(card, 10);
                 });
             } else {
                 card = CardBack(x, y, data);
@@ -68,7 +68,7 @@ function Hand(game, topic, turn, isPlayer, x, y) {
                     card.sprite.position.y = y;
                 });
 
-                game.renderer.add(card);
+                game.renderer.add(card, 5);
             }
             
 
