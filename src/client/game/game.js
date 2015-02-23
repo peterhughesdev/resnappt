@@ -9,7 +9,7 @@ function Game(app) {
 
     var fsm = FSM.create('starting', {
         'starting' : ['playing'],
-        'playing'  : ['snapping'],
+        'playing'  : ['snapping', 'finished'],
         'snapping' : ['playing'],
         'finished' : ['starting']
     });
@@ -80,6 +80,14 @@ function Game(app) {
         fsm.change('playing');
     };
 
+    this.end = function() {
+        if (fsm.change('finished')) {
+            participants.forEach(function(p) {
+                p.setInactive();
+            });
+        }
+    };
+
     this.endRound = function() {
         if (fsm.change('snapping')) {
             player.setInactive(); 
@@ -95,7 +103,6 @@ function Game(app) {
         participants[turn] = player;
 
         if (isPlayer) {
-            console.log('Adding self as player');
             self.player = player;
         }
     };

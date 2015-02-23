@@ -203,12 +203,12 @@ function CardFactory(x, y, data) {
     };
 
 
-    var rune = Text(100, 75, rune, 120, 'black');
-    var duration = Text(140, 230, data.effect.duration, 96, 'black');
-    var score = Text(140, -250, data.value, 96, 'black');
-    var name = Text(-40, -245, data.effect.name, 64, 'black');
+    var rune = Text(55, 32, rune, 60, 'black');
+    var duration = Text(70, 115, data.effect.duration, 48, 'black');
+    var score = Text(72, -125, data.value, 48, 'black');
+    var name = Text(-20, -122, data.effect.name, 32, 'black');
 
-    name.sprite.width = 240;
+    name.sprite.width = 230;
 
     var texture = '/images/cards/' + data.effect.name.toLowerCase() + '.png';
 
@@ -451,7 +451,7 @@ function Game(app) {
 
     var fsm = FSM.create('starting', {
         'starting' : ['playing'],
-        'playing'  : ['snapping'],
+        'playing'  : ['snapping', 'finished'],
         'snapping' : ['playing'],
         'finished' : ['starting']
     });
@@ -522,6 +522,14 @@ function Game(app) {
         fsm.change('playing');
     };
 
+    this.end = function() {
+        if (fsm.change('finished')) {
+            participants.forEach(function(p) {
+                p.setInactive();
+            });
+        }
+    };
+
     this.endRound = function() {
         if (fsm.change('snapping')) {
             player.setInactive(); 
@@ -537,7 +545,6 @@ function Game(app) {
         participants[turn] = player;
 
         if (isPlayer) {
-            console.log('Adding self as player');
             self.player = player;
         }
     };
@@ -1009,19 +1016,45 @@ function ConnectingScene(app, container) {
 module.exports = ConnectingScene;
 
 },{"../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/scenes/end.js":[function(require,module,exports){
+var Text = require('../entities/text');
+
 function EndScene(app, container) {
+    var endingText = Text(1024, 400, 'Game over!', 64, 'white');
+   
+    var scoreSub;
+
     this.enter = function(done) {
+        container.add(endingText);
+        
+        scoreSub = app.transport.subscribe('summary', JSON.parse).on('update', displaySummary);
+
         done();
     };
 
     this.leave = function(done) {
         done();
     };
+
+    function displaySummary(results) {
+        var highest = results.sort(byScore)[0];
+        
+        results.forEach(function(result, i) {
+            var resY = 650 + (80 * i);
+            var colour = result === highest ? '#8CE8FF' : 'white';
+                    
+            var resText = Text(800, resY, 'Player ' + i + ' -- ' + result.score, colour);
+            container.add(resText);
+        });
+    }
+
+    function byScore(r1, r2) {
+        return r1.score < r2.score ? 1 : -1;
+    }
 }
 
 module.exports = EndScene;
 
-},{}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/scenes/error.js":[function(require,module,exports){
+},{"../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/scenes/error.js":[function(require,module,exports){
 var Text = require('../entities/text');
 
 function ErrorScene(app, container) {
@@ -1076,6 +1109,7 @@ function GameScene(app, container) {
     var board = Board(1024, 768, 'base');
     
     // Subscribe to gameplay topics
+    var stateSub;
     var turnSub;
     var deckSub;
     var snapSub;
@@ -1109,7 +1143,9 @@ function GameScene(app, container) {
 
         scorePileSub = app.transport.subscribe('pile/score', JSON.parse).on('update', updateScorePile);
         effectPileSub = app.transport.subscribe('pile/effects', JSON.parse).on('update', updateEffectPile);
-        
+
+        stateSub = app.transport.subscribe('state', JSON.parse).on('update', endGame);
+
         app.game.start();
 
         done();
@@ -1123,8 +1159,17 @@ function GameScene(app, container) {
         scorePileSub.off('update', updateScorePile);
         effectPileSub.off('update', updateEffectPile);
 
+        stateSub.off('update', endGame);
+
         done();
     };
+
+    function endGame(res) {
+        if (res.state === 'NOT_PLAYING') {
+            app.game.end();
+            app.transition('finished');
+        }   
+    }
 
     function updateTurn(session) {
         if (session === transport.sessionID) {
@@ -1239,7 +1284,6 @@ var JoinBtn = require('../entities/button.js');
 var Board = require('../entities/board');
 var Background = require('../entities/background');
 var Text = require('../entities/text');
-var Card = require('../entities/card');
 
 function TitleScene(app, container) {
     var title = Title(1024, 768, '{resnappt}');
@@ -1308,7 +1352,7 @@ function TitleScene(app, container) {
 
 module.exports = TitleScene;
 
-},{"../entities/background":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/background.js","../entities/board":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/board.js","../entities/button.js":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/button.js","../entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js","../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js","../entities/title":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/title.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/service-manager.js":[function(require,module,exports){
+},{"../entities/background":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/background.js","../entities/board":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/board.js","../entities/button.js":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/button.js","../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js","../entities/title":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/title.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/service-manager.js":[function(require,module,exports){
 function ServiceManager(app) {
     var servicesForEvents = {};
     var servicesForTick = [];

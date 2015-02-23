@@ -34,6 +34,7 @@ function GameScene(app, container) {
     var board = Board(1024, 768, 'base');
     
     // Subscribe to gameplay topics
+    var stateSub;
     var turnSub;
     var deckSub;
     var snapSub;
@@ -67,7 +68,9 @@ function GameScene(app, container) {
 
         scorePileSub = app.transport.subscribe('pile/score', JSON.parse).on('update', updateScorePile);
         effectPileSub = app.transport.subscribe('pile/effects', JSON.parse).on('update', updateEffectPile);
-        
+
+        stateSub = app.transport.subscribe('state', JSON.parse).on('update', endGame);
+
         app.game.start();
 
         done();
@@ -81,8 +84,17 @@ function GameScene(app, container) {
         scorePileSub.off('update', updateScorePile);
         effectPileSub.off('update', updateEffectPile);
 
+        stateSub.off('update', endGame);
+
         done();
     };
+
+    function endGame(res) {
+        if (res.state === 'NOT_PLAYING') {
+            app.game.end();
+            app.transition('finished');
+        }   
+    }
 
     function updateTurn(session) {
         if (session === transport.sessionID) {
