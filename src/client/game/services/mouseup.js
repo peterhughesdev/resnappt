@@ -18,6 +18,7 @@ function mouseup(e, app, ctx, data) {
                     // Adding a card to the score pile
                     if (bottom.type.id === Entity.Types.ScorePile) {
                         player.play(currentCard.props.index, 'SCORE')
+                        app.transport.updateCardTopic(currentCard.props.index, -1000, -1000);
                         app.game.endRound();
                         break;
                     }
@@ -25,6 +26,7 @@ function mouseup(e, app, ctx, data) {
                     // Adding a card to the effect pile
                     if (bottom.type.id === Entity.Types.EffectPile && player.hand.size() > 1) {
                         player.play(currentCard.props.index, 'EFFECT');
+                        app.transport.updateCardTopic(currentCard.props.index, -1000, -1000);
                         break;
                     }
                 }
