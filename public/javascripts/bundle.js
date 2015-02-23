@@ -533,8 +533,8 @@ function Game(app) {
 
     this.end = function() {
         if (fsm.change('finished')) {
-            app.unsubscribe('turn');
-            app.unsubscribe('snap/timer');
+            app.transport.unsubscribe('turn');
+            app.transport.unsubscribe('snap/timer');
 
             participants.forEach(function(p) {
                 p.remove();
