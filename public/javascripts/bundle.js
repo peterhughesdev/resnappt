@@ -156,17 +156,46 @@ module.exports = BackgroundFactory;
 var Entity = require('./entity');
 
 var Board = Entity.type('Board', {
-    width : 660,
-    height : 660,
-    texture : '/images/board.png'
+    width : 260,
+    height : 260,
+    texture : '/images/transparent.png'
 });
 
+var BCircle = Entity.type('BCircle', {
+    width : 660,
+    height : 660,
+    texture : '/images/board_1.png'
+});
+
+var BSquare = Entity.type('BSquare', {
+    width : 660,
+    height : 660,
+    texture : '/images/board_2.png'
+});
+
+var BStar = Entity.type('BStar', {
+    width : 660,
+    height : 660,
+    texture : '/images/board_3.png'
+});
+
+
 function BoardFactory(x, y, id) {
-    return Entity.create(Board, {
+    var board = Entity.create(Board, {
         x : x,
         y : y,
         name : id
     });
+
+    var circle = Entity.create(BCircle, { x : 0, y : 0 });
+    var square = Entity.create(BSquare, { x : 0, y : 0 });
+    var stars = Entity.create(BStar, { x: 0, y : 0 });
+
+    board.sprite.addChild(circle.sprite);
+    board.sprite.addChild(square.sprite);
+    board.sprite.addChild(stars.sprite);
+
+    return board;
 };
 
 module.exports = BoardFactory;
@@ -410,7 +439,32 @@ function ScorePileFactory(x, y) {
 
 module.exports = ScorePileFactory;
 
-},{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js":[function(require,module,exports){
+},{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/snap-ui.js":[function(require,module,exports){
+var Entity = require('./entity');
+var Text = require('./text');
+
+var SnapGUI = Entity.type('SnapGUI', {
+    width : 200,
+    height : 200,
+    texture : '/images/effect.png'
+});
+
+function SnapGUIFactory(x, y) {
+    var circle = Entity.create(SnapGUI, {
+        x : x,
+        y : y
+    });
+
+    var text = Text(0, -10, '', 80, 'white');
+
+    circle.sprite.addChild(text.sprite);
+    circle.text = text;
+    return circle;
+}
+
+module.exports = SnapGUIFactory;
+
+},{"./entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js","./text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js":[function(require,module,exports){
 var Entity = require('./entity');
 
 var Text = Entity.type('Text', {});
@@ -1141,6 +1195,7 @@ var Text = require('../entities/text');
 var Background = require('../entities/background');
 var Board = require('../entities/board');
 var Card = require('../entities/card');
+var SnapGUI = require('../entities/snap-ui');
 
 var effectCardPos = [
     { x : 640, y : 768 },
@@ -1164,11 +1219,10 @@ function GameScene(app, container) {
     var scorePile = ScorePile(scoreCardPos.x, scoreCardPos.y);
     var scoreCard;
 
-    var deck = Text(1024, 140, 'Dealing', 48);
-    var turn = Text(1024, 200, 'Waiting to start', 48);
-
     var bg = Background();
     var board = Board(1024, 768, 'base');
+    var snap = SnapGUI(1024, 384);
+    var deck = Text(1024, 128, 'Dealing...', 48);
     
     // Subscribe to gameplay topics
     var stateSub;
@@ -1191,13 +1245,12 @@ function GameScene(app, container) {
     this.enter = function(done) {
         container.add(bg);
         container.add(board);
+        container.add(snap, 8);
+        container.add(deck);
 
         // Setup board
         effectPiles.forEach(container.add);
         container.add(scorePile);
-
-        container.add(deck, 20);
-        container.add(turn, 20);
 
         turnSub = app.transport.subscribe('turn', String).on('update', updateTurn);
         deckSub = app.transport.subscribe('deck', String).on('update', updateDeck);
@@ -1214,7 +1267,6 @@ function GameScene(app, container) {
     };
 
     this.leave = function(done) {
-        turnSub.off('update', updateTurn);
         deckSub.off('update', updateDeck);
         snapSub.off('update', updateSnap);
 
@@ -1234,24 +1286,20 @@ function GameScene(app, container) {
         if (res.state === 'FINISHED') {
             app.game.end();
             app.transition('finished');
-        }   
-    }
-
-    function updateTurn(session) {
-        if (session === transport.sessionID) {
-            turn.sprite.setText('Your turn'); 
-        } else {
-            turn.sprite.setText('Other player\'s turn');
         }
     }
 
     function updateDeck(size) {
-        deck.sprite.setText('Deck size: ' + size); 
+        deck.sprite.setText('Deck size : '+size);
+    }
+
+    function updateTurn() {
+        snap.text.sprite.setText('');
     }
 
     function updateSnap(timer) {
         if (app.game.getState() === 'snapping') {
-            turn.sprite.setText('Snap : ' + timer);
+            snap.text.sprite.setText(timer);
         }
     }
 
@@ -1287,7 +1335,7 @@ function GameScene(app, container) {
 
 module.exports = GameScene;
 
-},{"../entities/background":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/background.js","../entities/board":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/board.js","../entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js","../entities/effect-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/effect-pile.js","../entities/entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js","../entities/score-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score-pile.js","../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/scenes/join.js":[function(require,module,exports){
+},{"../entities/background":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/background.js","../entities/board":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/board.js","../entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js","../entities/effect-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/effect-pile.js","../entities/entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js","../entities/score-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score-pile.js","../entities/snap-ui":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/snap-ui.js","../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/scenes/join.js":[function(require,module,exports){
 var Text = require('../entities/text');
 var Background = require('../entities/background');
 var Board = require('../entities/board');
