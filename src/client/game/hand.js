@@ -69,7 +69,6 @@ function Hand(game, topic, turn, isPlayer, x, y) {
                 });
 
                 game.transport.subscribe(cardTopic).on('unsubscribed', function() {
-                    console.log('Unsubscribed from card topic: ' + data.index);
                     self.remove(data.index);
                 });
 

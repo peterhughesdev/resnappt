@@ -30,9 +30,15 @@ function Player(app, session, turn, isPlayer) {
     var hand = new Hand(app, topic, turn, isPlayer, pos.x, pos.y);
     this.hand = hand;
 
-    app.transport.subscribe(topic + 'score', String, function(newScore) {
+    app.transport.subscribe(topic + 'score').on('update', function(newScore) {
         score.sprite.setText('Score : '+newScore);
+    }).on('unsubscribed', function() {
+        active = false;
+        icon.sprite.alpha = 0;
+
+        score.sprite.setText('Left game');
     });
+
     app.transport.subscribe(topic + 'hand', JSON.parse, hand.update);
 
     this.play = function(card, pile) {

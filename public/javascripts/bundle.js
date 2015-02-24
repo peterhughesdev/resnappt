@@ -651,7 +651,6 @@ function Hand(game, topic, turn, isPlayer, x, y) {
                 });
 
                 game.transport.subscribe(cardTopic).on('unsubscribed', function() {
-                    console.log('Unsubscribed from card topic: ' + data.index);
                     self.remove(data.index);
                 });
 
@@ -729,9 +728,15 @@ function Player(app, session, turn, isPlayer) {
     var hand = new Hand(app, topic, turn, isPlayer, pos.x, pos.y);
     this.hand = hand;
 
-    app.transport.subscribe(topic + 'score', String, function(newScore) {
+    app.transport.subscribe(topic + 'score').on('update', function(newScore) {
         score.sprite.setText('Score : '+newScore);
+    }).on('unsubscribed', function() {
+        active = false;
+        icon.sprite.alpha = 0;
+
+        score.sprite.setText('Left game');
     });
+
     app.transport.subscribe(topic + 'hand', JSON.parse, hand.update);
 
     this.play = function(card, pile) {
@@ -1065,14 +1070,17 @@ function ConnectingScene(app, container) {
 module.exports = ConnectingScene;
 
 },{"../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/scenes/end.js":[function(require,module,exports){
+var Background = require('../entities/background');
 var Text = require('../entities/text');
 
 function EndScene(app, container) {
     var endingText = Text(1024, 400, 'Game ove!', 64, 'white');
-   
+    var bg = Background();
+
     var scoreSub;
 
     this.enter = function(done) {
+        container.add(bg);
         container.add(endingText);
         
         scoreSub = app.transport.subscribe('summary', JSON.parse).on('update', displaySummary);
@@ -1085,7 +1093,9 @@ function EndScene(app, container) {
     };
 
     function displaySummary(results) {
-        var highest = results.sort(byScore)[0];
+        var highest = results.reduce(function(prev, curr) {
+            return prev.score < curr.score ? curr : prev;
+        }, results[0]);
         
         results.forEach(function(result, i) {
             var resY = 650 + (80 * i);
@@ -1104,7 +1114,7 @@ function EndScene(app, container) {
 
 module.exports = EndScene;
 
-},{"../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/scenes/error.js":[function(require,module,exports){
+},{"../entities/background":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/background.js","../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/scenes/error.js":[function(require,module,exports){
 var Text = require('../entities/text');
 
 function ErrorScene(app, container) {
@@ -1210,6 +1220,10 @@ function GameScene(app, container) {
         effectPileSub.off('update', updateEffectPile);
 
         stateSub.off('update', endGame);
+
+        app.renderer.getEntities().filter(function(e) {
+            return e.type.id === Entity.Types.Card || e.type.id === Entity.Types.CardBack;
+        }).forEach(app.renderer.remove);
 
         done();
     };
@@ -1344,12 +1358,21 @@ function TitleScene(app, container) {
     var boardLight = Board(1024, 768, 'light');
     var board = Board(1024, 768, 'base');
 
+    var rune1 = Text(200, 200, '!', 192);
+    var rune2 = Text(1848, 200, '"', 192);
+    var rune3 = Text(200, 1336, '#', 192);
+    var rune4 = Text(1848, 1336, '$', 192);
+
     this.enter = function(done) {
         container.add(bg);
         container.add(board);
         container.add(boardDark);
         container.add(boardLight);
         container.add(title);
+        container.add(rune1);
+        container.add(rune2);
+        container.add(rune3);
+        container.add(rune4);
 
         var blur = new PIXI.BlurFilter();
         blur.blurX = 6;
@@ -1374,6 +1397,10 @@ function TitleScene(app, container) {
         var id = setInterval(function() {
             title.sprite.alpha -= 0.01;
             ready.sprite.alpha -= 0.01;
+            rune1.sprite.alpha -= 0.01;
+            rune2.sprite.alpha -= 0.01;
+            rune3.sprite.alpha -= 0.01;
+            rune4.sprite.alpha -= 0.01;
 
             if (board.sprite.alpha < 1) {
                 board.sprite.alpha += 0.002;
@@ -1477,6 +1504,17 @@ function animate(app, ctx, dt) {
             title.sprite.height = title.sprite.height + (Math.sin(t) * 0.0768);
         }
 
+        var runes = entities.filter(function(e) {
+            return e.type.id === Entity.Types.Text;
+        });
+
+        for (var r in runes) {
+            var rune = runes[r];
+            rune.sprite.width = rune.sprite.width + (Math.sin(t / 3.0) * 0.2048);
+            rune.sprite.height = rune.sprite.height + (Math.sin(t / 3.0) * 0.1536);
+            rune.sprite.alpha = 0.5 + (Math.cos(t / 7.0) * 0.5);
+        }
+
         var boards = entities.filter(function(e) {
             return e.type.id === Entity.Types.Board;
         });
@@ -1522,6 +1560,18 @@ function mousedown(e, app, ctx, data) {
                     ctx.currentCard = hand.get(entity.props.index);
                     break;
                 }
+            }
+
+            if (ctx.currentCard) {
+                hand.get().forEach(function(card) {
+                    app.renderer.remove(card);
+
+                    if (card === ctx.currentCard) {
+                        app.renderer.add(card, 11);
+                    } else {
+                        app.renderer.add(card, 10);
+                    }
+                });
             }
         }
     }
@@ -1653,6 +1703,12 @@ function mousemove(e, app, ctx, data) {
 
             ctx.highlighted = highlighted;
         }
+    } else {
+        if (ctx.current) {
+            app.renderer.remove(ctx.current);
+        }
+
+        ctx.current = undefined;
     }
 }
 

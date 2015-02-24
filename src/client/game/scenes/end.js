@@ -1,11 +1,14 @@
+var Background = require('../entities/background');
 var Text = require('../entities/text');
 
 function EndScene(app, container) {
     var endingText = Text(1024, 400, 'Game ove!', 64, 'white');
-   
+    var bg = Background();
+
     var scoreSub;
 
     this.enter = function(done) {
+        container.add(bg);
         container.add(endingText);
         
         scoreSub = app.transport.subscribe('summary', JSON.parse).on('update', displaySummary);
@@ -18,7 +21,9 @@ function EndScene(app, container) {
     };
 
     function displaySummary(results) {
-        var highest = results.sort(byScore)[0];
+        var highest = results.reduce(function(prev, curr) {
+            return prev.score < curr.score ? curr : prev;
+        }, results[0]);
         
         results.forEach(function(result, i) {
             var resY = 650 + (80 * i);

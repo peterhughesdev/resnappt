@@ -48,6 +48,12 @@ function mousemove(e, app, ctx, data) {
 
             ctx.highlighted = highlighted;
         }
+    } else {
+        if (ctx.current) {
+            app.renderer.remove(ctx.current);
+        }
+
+        ctx.current = undefined;
     }
 }
 

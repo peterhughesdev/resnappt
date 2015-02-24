@@ -86,6 +86,10 @@ function GameScene(app, container) {
 
         stateSub.off('update', endGame);
 
+        app.renderer.getEntities().filter(function(e) {
+            return e.type.id === Entity.Types.Card || e.type.id === Entity.Types.CardBack;
+        }).forEach(app.renderer.remove);
+
         done();
     };
 

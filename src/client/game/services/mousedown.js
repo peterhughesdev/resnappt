@@ -16,6 +16,18 @@ function mousedown(e, app, ctx, data) {
                     break;
                 }
             }
+
+            if (ctx.currentCard) {
+                hand.get().forEach(function(card) {
+                    app.renderer.remove(card);
+
+                    if (card === ctx.currentCard) {
+                        app.renderer.add(card, 11);
+                    } else {
+                        app.renderer.add(card, 10);
+                    }
+                });
+            }
         }
     }
 }
