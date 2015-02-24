@@ -208,7 +208,7 @@ function Game() {
 
             self.drawHand(player);
 
-            if (finalRound && player.getHand().length === 0) {
+            if (player.getHand().length === 0) {
                 player.finished();
                 state.endGame();
                 self.end();
