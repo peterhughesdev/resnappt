@@ -1,6 +1,8 @@
 var EffectPile = require('../entities/effect-pile');
 var ScorePile = require('../entities/score-pile');
+var Entity = require('../entities/entity');
 var Text = require('../entities/text');
+
 var Background = require('../entities/background');
 var Board = require('../entities/board');
 var Card = require('../entities/card');

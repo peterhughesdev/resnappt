@@ -1135,7 +1135,9 @@ module.exports = ErrorScene;
 },{"../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/scenes/game.js":[function(require,module,exports){
 var EffectPile = require('../entities/effect-pile');
 var ScorePile = require('../entities/score-pile');
+var Entity = require('../entities/entity');
 var Text = require('../entities/text');
+
 var Background = require('../entities/background');
 var Board = require('../entities/board');
 var Card = require('../entities/card');
@@ -1285,7 +1287,7 @@ function GameScene(app, container) {
 
 module.exports = GameScene;
 
-},{"../entities/background":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/background.js","../entities/board":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/board.js","../entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js","../entities/effect-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/effect-pile.js","../entities/score-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score-pile.js","../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/scenes/join.js":[function(require,module,exports){
+},{"../entities/background":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/background.js","../entities/board":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/board.js","../entities/card":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/card.js","../entities/effect-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/effect-pile.js","../entities/entity":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/entity.js","../entities/score-pile":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/score-pile.js","../entities/text":"/Users/Peter/Dev/Projects/Resnappt/src/client/game/entities/text.js"}],"/Users/Peter/Dev/Projects/Resnappt/src/client/game/scenes/join.js":[function(require,module,exports){
 var Text = require('../entities/text');
 var Background = require('../entities/background');
 var Board = require('../entities/board');
