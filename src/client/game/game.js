@@ -56,22 +56,9 @@ function Game(app) {
 
             app.transport.subscribe('snap/timer', Number, function(timer) {
                 if (timer === 5) {
-                    if (fsm.change('snapping')) {
-                        participants.forEach(function(p) {
-                            if (p === player) {
-                                p.setInactive();
-                            } else {
-                                p.setActive();
-                            }
-                        })  
-                    }
+                    fsm.change('snapping');
                 }
-
                 if (timer === 0) {
-                    participants.forEach(function(p) {
-                        p.setInactive();
-                    });
-
                     fsm.change('playing');
                 }
             });
