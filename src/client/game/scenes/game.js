@@ -4,6 +4,7 @@ var Text = require('../entities/text');
 var Background = require('../entities/background');
 var Board = require('../entities/board');
 var Card = require('../entities/card');
+var SnapGUI = require('../entities/snap-ui');
 
 var effectCardPos = [
     { x : 640, y : 768 },
@@ -27,11 +28,10 @@ function GameScene(app, container) {
     var scorePile = ScorePile(scoreCardPos.x, scoreCardPos.y);
     var scoreCard;
 
-    var deck = Text(1024, 140, 'Dealing', 48);
-    var turn = Text(1024, 200, 'Waiting to start', 48);
-
     var bg = Background();
     var board = Board(1024, 768, 'base');
+    var snap = SnapGUI(1024, 384);
+    var deck = Text(1024, 128, 'Dealing...', 48);
     
     // Subscribe to gameplay topics
     var stateSub;
@@ -54,13 +54,12 @@ function GameScene(app, container) {
     this.enter = function(done) {
         container.add(bg);
         container.add(board);
+        container.add(snap, 8);
+        container.add(deck);
 
         // Setup board
         effectPiles.forEach(container.add);
         container.add(scorePile);
-
-        container.add(deck, 20);
-        container.add(turn, 20);
 
         turnSub = app.transport.subscribe('turn', String).on('update', updateTurn);
         deckSub = app.transport.subscribe('deck', String).on('update', updateDeck);
@@ -77,7 +76,6 @@ function GameScene(app, container) {
     };
 
     this.leave = function(done) {
-        turnSub.off('update', updateTurn);
         deckSub.off('update', updateDeck);
         snapSub.off('update', updateSnap);
 
@@ -97,24 +95,20 @@ function GameScene(app, container) {
         if (res.state === 'FINISHED') {
             app.game.end();
             app.transition('finished');
-        }   
-    }
-
-    function updateTurn(session) {
-        if (session === transport.sessionID) {
-            turn.sprite.setText('Your turn'); 
-        } else {
-            turn.sprite.setText('Other player\'s turn');
         }
     }
 
     function updateDeck(size) {
-        deck.sprite.setText('Deck size: ' + size); 
+        deck.sprite.setText('Deck size : '+size);
+    }
+
+    function updateTurn() {
+        snap.text.sprite.setText('');
     }
 
     function updateSnap(timer) {
         if (app.game.getState() === 'snapping') {
-            turn.sprite.setText('Snap : ' + timer);
+            snap.text.sprite.setText(timer);
         }
     }
 
