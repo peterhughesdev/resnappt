@@ -75,14 +75,13 @@ var checkReadiness = function() {
       || playerService.getNPlayers() === 4) {
         finaliseRoom();
     }
-
 };
 
 var removePlayer = function(playerID) {
     interest.splice(interest.indexOf(playerID),1);
     playerService.removePlayer(playerID);
 
-    if (playerService.getNPlayers() < 1) {
+    if (playerService.getNPlayers() <= 1) {
         endGame();
     } else {
         checkReadiness();
