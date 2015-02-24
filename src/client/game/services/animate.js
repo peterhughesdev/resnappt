@@ -73,7 +73,7 @@ function animate(app, ctx, dt) {
                 board.sprite.filters = [getModulationFilter(t, 3)];
             }
             if (snap) {
-                snap.sprite.filters = [getModuleationFilter(t, 3)];
+                snap.sprite.filters = [getModulationFilter(t, 3)];
             }
         }
         var effects = entities.filter(function(e) {
